@@ -33,6 +33,7 @@
   #modal figcaption { margin-top:14px; font-size:17px; font-style:italic; color:#cfdcd7; }
   #close { position:fixed; top:14px; right:18px; font-size:30px; color:#cfdcd7; cursor:pointer; z-index:11; display:none; }
   #modal.on ~ #close { display:block; }
+  body.locked #close { display:none !important; }
   #gate { position:fixed; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center;
     background: radial-gradient(ellipse at center, rgba(20,32,30,.92), rgba(4,8,8,.98)); cursor:pointer; text-align:center; padding:20px; }
   #gate h1 { font-weight:normal; letter-spacing:.12em; font-size: clamp(26px,5vw,48px); margin:0 0 12px; color:#dfe9e4; }
@@ -74,13 +75,13 @@ const SCENE = {
     { id:"tv", x:95.5, y:13.5, w:4.5, h:21,
       text:"Televizyonun etrafına da bir bakayım.", image:"tv.jpg",
       caption:"Televizyonu yeni oynatmışlar galiba. Bir bakayım…", sound:"",
-      inner:[ { id:"tvscreen", x:70, y:0, w:30, h:37, text:"", sound:"",
+      inner:[ { id:"tvscreen", x:50, y:0, w:50, h:60, text:"", sound:"",
         next:{ image:"notebook.jpg", caption:"",
           inner:[ { id:"notebook", x:49, y:45, w:27, h:19, text:"Defteri al", sound:"rustle", action:"take" } ] } } ] },
     { id:"window", x:76, y:0, w:17, h:25,
       text:"Tipik Forks, yağmur, yağmur, yine yağmur.", image:"", caption:"", sound:"" },
     { id:"sink", x:37.5, y:17, w:7.5, h:11,
-      text:"Diş fırçası ve tıraş bıçağı… İlginç bir şey yok. Yine de lavabonun altına bir baksam mı?", image:"", caption:"", sound:"" },
+      text:"Diş fırçası ve tıraş bıçağı… İlginç bir şey yok. Yine de lavabonun altına bir baksam mı?", view:"sink", sound:"drawer" },
     { id:"pillows", x:6, y:27.5, w:27, h:12,
       text:"Yastığın altına bir şey saklamış olabilir mi?", image:"", caption:"", sound:"rustle" },
     { id:"clothes", x:14, y:39.5, w:30, h:21,
@@ -90,7 +91,7 @@ const SCENE = {
       text:"Şarj aleti burada ama telefon ortada yok…", image:"", caption:"", sound:"" },
     { id:"bag", x:7, y:63, w:35, h:32,
       text:"Bennet burada olsaydı içine bakmaya cesaret edemezdim. Ama dışarı çıktığına göre bir göz atabilirim.",
-      image:"", caption:"", sound:"rustle" },
+      view:"bag", sound:"rustle" },
     { id:"map", x:61, y:59.5, w:27, h:25,
       text:"Olimpik Yarımadası'nın haritası. Üzerine bir sürü işaret koymuş. Acaba neyi araştırıyordu?",
       image:"", caption:"", sound:"paper" },
@@ -100,6 +101,26 @@ const SCENE = {
     { id:"mug", x:89, y:54, w:7, h:11,
       text:"Kahvesine dokunmadan çıkıp gitmiş. Belli ki acelesi vardı.", image:"", caption:"", sound:"" }
   ]
+};
+/* Крупные планы. Сумка: фото (лицо → оборот, забрать) → снова сумка → удостоверение (забрать).
+   После того как фото забрано, выйти в комнату нельзя, пока не забрано удостоверение. */
+const VIEWS = {
+  bag:        { image:"bag.jpg", caption:"",
+                inner:[ { id:"bagin", x:8, y:8, w:84, h:82, text:"", sound:"rustle", action:"bagSearch" } ] },
+  photoFront: { image:"photo_front.jpg", caption:"Ne mutlu bir çift! Neresi acaba?",
+                inner:[ { id:"photo", x:25, y:19, w:70, h:57, text:"", sound:"paper", go:"photoBack" } ] },
+  photoBack:  { image:"photo_back.jpg", caption:"Glacier… Ha, Montana’daki o kocaman milli park. Bu fotoğrafı yanıma alayım, işime yarar.",
+                inner:[ { id:"photoback", x:0, y:0, w:100, h:100, text:"", sound:"paper", action:"takePhoto" } ] },
+  idcard:     { image:"idcard.jpg", caption:"Park çalışanına ait bir kimlik kartı…",
+                inner:[ { id:"card", x:30, y:20, w:61, h:53, text:"Kartı al", sound:"", action:"takeCard" } ] },
+  sink:       { image:"undersink.jpg", caption:"" }
+};
+const STATE = { photoTaken:false, cardTaken:false, locked:false };
+const ACTIONS = {
+  bagSearch(){ if(!STATE.photoTaken) return openView(VIEWS.photoFront); if(!STATE.cardTaken) return openView(VIEWS.idcard); },
+  takePhoto(){ STATE.photoTaken=true; STATE.locked=true; openView(VIEWS.bag); },
+  takeCard(){ STATE.cardTaken=true; STATE.locked=false; document.body.classList.remove('locked'); closeModal(); },
+  take(){ closeModal(); }
 };
 const EDIT = new URLSearchParams(location.search).has('edit');
 
@@ -190,6 +211,7 @@ function makeHot(h, parent, onClick){
   parent.appendChild(el); return el;
 }
 function openView(v){   // v = {image, caption, inner}
+  document.body.classList.toggle('locked', STATE.locked);
   mframe.querySelectorAll('.hot').forEach(x=>x.remove());
   mimg.src=v.image; mcap.textContent=v.caption||'';
   (v.inner||[]).forEach(h=>makeHot(h, mframe, innerClick));
@@ -197,16 +219,17 @@ function openView(v){   // v = {image, caption, inner}
 }
 function innerClick(h){
   if(h.next) return openView(h.next);
-  if(h.action==='take'){ closeModal(); return; }
+  if(h.go) return openView(VIEWS[h.go]);
+  if(h.action && ACTIONS[h.action]) return ACTIONS[h.action](h);
   closeModal();
 }
-SCENE.hotspots.forEach(h=>{ makeHot(h, scene, h=>{ if(h.image) openView(h); }); });
+SCENE.hotspots.forEach(h=>{ makeHot(h, scene, h=>{ if(h.view) openView(VIEWS[h.view]); else if(h.image) openView(h); }); });
 function preload(v){ if(v.image){ const p=new Image(); p.src=v.image; } (v.inner||[]).forEach(i=>i.next&&preload(i.next)); }
-SCENE.hotspots.forEach(preload);
-function closeModal(){ modal.classList.remove('on'); tip.classList.remove('on'); }
+SCENE.hotspots.forEach(preload); Object.values(VIEWS).forEach(preload);
+function closeModal(){ if(STATE.locked) return; modal.classList.remove('on'); tip.classList.remove('on'); }
 modal.addEventListener('click',closeModal); document.getElementById('close').addEventListener('click',closeModal);
 addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
-document.getElementById('gate').addEventListener('click',function(){ audio().resume(); play('door'); setTimeout(startRain, 900); this.classList.add('off'); });
+document.getElementById('gate').addEventListener('click',function(){ audio().resume(); startRain(); this.classList.add('off'); });
 document.getElementById('mute').addEventListener('click',function(){ muted=!muted; master.gain.value=muted?0:1; if(rainNode&&rainNode.el) rainNode.el.muted=muted; this.textContent=muted?'🔇':'🔊'; });
 
 /* ============ РЕЖИМ РАЗМЕТКИ (?edit=1) ============ */
