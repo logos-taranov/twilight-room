@@ -166,7 +166,7 @@ SCENE.hotspots.forEach(h=>{
   el.addEventListener('mousemove',e=>{ tip.style.left=Math.min(e.clientX+16, innerWidth-320)+'px'; tip.style.top=(e.clientY+18)+'px'; });
   el.addEventListener('mouseleave',()=>tip.classList.remove('on'));
   el.addEventListener('click',e=>{ if(EDIT) return; e.stopPropagation(); tip.classList.remove('on'); play(h.sound);
-    if(h.image){ document.getElementById('mimg').src=h.image; document.getElementById('mcap').textContent=h.caption||h.text; modal.classList.add('on'); } });
+    if(h.image){ document.getElementById('mimg').src=h.image; document.getElementById('mcap').textContent=h.caption||''; modal.classList.add('on'); } });
   scene.appendChild(el);
 });
 SCENE.hotspots.forEach(h=>{ if(h.image){ const p=new Image(); p.src=h.image; } });
