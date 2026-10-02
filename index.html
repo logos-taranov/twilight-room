@@ -17,9 +17,9 @@
   .hot:hover, .hot.focus { box-shadow: 0 0 22px 6px var(--glow) inset, 0 0 18px 2px var(--glow);
     background: rgba(200,230,220,.06); }
   body.edit .hot { outline: 1px dashed #ffd27a; }
-  #tip { position:fixed; pointer-events:none; max-width:300px; padding:10px 14px; font-size:15px; line-height:1.4;
-    background: rgba(8,14,13,.82); border:1px solid rgba(160,190,180,.35); border-radius:8px;
-    box-shadow:0 6px 30px rgba(0,0,0,.6); opacity:0; transition:opacity .2s; font-style:italic; z-index:5; }
+  #tip { position:fixed; pointer-events:none; max-width:340px; padding:12px 16px; font-size:16px; line-height:1.45;
+    background:#ffffff; color:#1b1b1b; border-radius:4px;
+    box-shadow:0 8px 28px rgba(0,0,0,.55); opacity:0; transition:opacity .25s; font-style:italic; z-index:5; }
   #tip.on { opacity:1; }
   #modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:10;
     background: rgba(4,8,8,.86); backdrop-filter: blur(3px); }
@@ -34,7 +34,8 @@
   #gate { position:fixed; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center;
     background: radial-gradient(ellipse at center, rgba(20,32,30,.92), rgba(4,8,8,.98)); cursor:pointer; text-align:center; padding:20px; }
   #gate h1 { font-weight:normal; letter-spacing:.12em; font-size: clamp(26px,5vw,48px); margin:0 0 12px; color:#dfe9e4; }
-  #gate p { color:var(--fog); font-style:italic; margin:0; }
+  #gate h2 { font-weight:normal; font-style:italic; font-size: clamp(18px,3vw,28px); margin:0 0 28px; color:#b9cbc5; letter-spacing:.06em; }
+  #gate p { color:var(--fog); font-style:italic; margin:0; font-size:15px; opacity:.85; }
   #gate.off { opacity:0; pointer-events:none; transition:opacity 1.2s; }
   #mute { position:fixed; left:16px; bottom:14px; z-index:6; font-size:22px; cursor:pointer; opacity:.7; user-select:none; }
   #editbox { position:fixed; right:10px; bottom:10px; width:360px; max-height:45vh; z-index:7; display:none;
@@ -49,7 +50,7 @@
 <div id="modal"><figure><img id="mimg" alt=""><figcaption id="mcap"></figcaption></figure></div>
 <div id="close">×</div>
 <div id="mute" title="Звук">🔊</div>
-<div id="gate"><h1 id="gtitle">Комната Беллы</h1><p>Нажмите, чтобы войти. Включите звук.</p></div>
+<div id="gate"><h1 id="gtitle">Sedar Creek Motel</h1><h2 id="gsub">Avcının odası</h2><p>Girmek için tıklayın 🔊</p></div>
 <pre id="editbox"></pre>
 
 <script>
@@ -59,19 +60,15 @@
    sound: "rustle" | "drawer" | "paper" | "wood" | "glass" | ссылка на свой файл (mp3/ogg)
 */
 const SCENE = {
-  title: "Комната Беллы",
-  image: "room.svg",
-  aspect: 16/9,
+  title: "Sedar Creek Motel",
+  subtitle: "Avcının odası",
+  image: "room.jpg",
+  aspect: 1280/853,
   rain: "rain",                // "rain" = синтезированный дождь; либо ссылка на свой файл
   hotspots: [
-    { id:"bag",    x:58, y:70, w:17, h:20, text:"Школьный рюкзак. Брошен у кровати, будто впопыхах.",
-      image:"bag.svg",    caption:"Внутри: «Ромео и Джульетта», тетрадь по биологии, яблоко.", sound:"rustle" },
-    { id:"drawer", x:9,  y:56, w:21, h:11, text:"Ящик стола приоткрыт.",
-      image:"drawer.svg", caption:"Под тетрадями спрятан старый билет на поезд до Финикса.", sound:"drawer" },
-    { id:"window", x:38, y:12, w:22, h:40, text:"За окном дождь. Кажется, в темноте кто-то стоит.",
-      image:"window.svg", caption:"Окно не заперто. На подоконнике следы влаги.", sound:"glass" },
-    { id:"book",   x:80, y:47, w:12, h:12, text:"Книга на тумбочке, заложена посередине.",
-      image:"book.svg",   caption:"На полях карандашом: «Сколько тебе лет?»", sound:"paper" }
+    { id:"bag", x:7, y:62, w:35, h:31,
+      text:"Bennet burada olsaydı bakmayı cesaret etmezdim ama çıktığına göre bir göz atsam iyi olur.",
+      image:"", caption:"", sound:"rustle" }
   ]
 };
 const EDIT = new URLSearchParams(location.search).has('edit');
@@ -84,22 +81,30 @@ function noiseBuffer(sec, color){
   for(let i=0;i<n;i++){ const w=Math.random()*2-1; if(color==='brown'){ last=(last+0.02*w)/1.02; d[i]=last*3.5; } else d[i]=w; }
   return b;
 }
+function pinkBuffer(sec){
+  const c=audio(), n=c.sampleRate*sec, b=c.createBuffer(1,n,c.sampleRate), d=b.getChannelData(0);
+  let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+  for(let i=0;i<n;i++){ const w=Math.random()*2-1;
+    b0=.99886*b0+w*.0555179; b1=.99332*b1+w*.0750759; b2=.96900*b2+w*.1538520; b3=.86650*b3+w*.3104856;
+    b4=.55000*b4+w*.5329522; b5=-.7616*b5-w*.0168980; d[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11; b6=w*.115926; }
+  return b;
+}
 function startRain(){
   const c=audio();
-  if(SCENE.rain && SCENE.rain!=='rain'){ const a=new Audio(SCENE.rain); a.loop=true; a.volume=.6; a.play(); rainNode={stop:()=>a.pause(), el:a}; return; }
-  const src=c.createBufferSource(); src.buffer=noiseBuffer(4,'white'); src.loop=true;
-  const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1200; bp.Q.value=.6;
-  const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=5000;
-  const g=c.createGain(); g.gain.value=0; g.gain.linearRampToValueAtTime(.22, c.currentTime+3);
-  src.connect(bp).connect(lp).connect(g).connect(master); src.start();
-  const rum=c.createBufferSource(); rum.buffer=noiseBuffer(4,'brown'); rum.loop=true;
-  const rg=c.createGain(); rg.gain.value=0; rg.gain.linearRampToValueAtTime(.35, c.currentTime+3);
-  rum.connect(rg).connect(master); rum.start();
-  (function drops(){ if(!ctx) return; const t=c.currentTime; const o=c.createBufferSource(); o.buffer=noiseBuffer(.03,'white');
-    const f=c.createBiquadFilter(); f.type='highpass'; f.frequency.value=2500+Math.random()*3000;
-    const gg=c.createGain(); gg.gain.setValueAtTime(.05+Math.random()*.06,t); gg.gain.exponentialRampToValueAtTime(.001,t+.03);
-    o.connect(f).connect(gg).connect(master); o.start(t); setTimeout(drops, 40+Math.random()*160); })();
-  rainNode={stop(){src.stop();rum.stop();}};
+  if(SCENE.rain && SCENE.rain!=='rain'){ const a=new Audio(SCENE.rain); a.loop=true; a.volume=.35; a.play(); rainNode={stop:()=>a.pause(), el:a}; return; }
+  // мягкий ровный шелест: розовый шум, срезанные верха, медленное «дыхание» громкости
+  const src=c.createBufferSource(); src.buffer=pinkBuffer(6); src.loop=true;
+  const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1600; lp.Q.value=.3;
+  const hp=c.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=180;
+  const g=c.createGain(); g.gain.value=0; g.gain.linearRampToValueAtTime(.16, c.currentTime+6);
+  const lfo=c.createOscillator(), lfoG=c.createGain(); lfo.frequency.value=.07; lfoG.gain.value=.03; lfo.connect(lfoG).connect(g.gain); lfo.start();
+  src.connect(hp).connect(lp).connect(g).connect(master); src.start();
+  // редкие тихие капли по подоконнику
+  (function drops(){ if(!ctx) return; const t=c.currentTime; const o=c.createBufferSource(); o.buffer=noiseBuffer(.02,'white');
+    const f=c.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1800+Math.random()*1400; f.Q.value=4;
+    const gg=c.createGain(); gg.gain.setValueAtTime(.006+Math.random()*.012,t); gg.gain.exponentialRampToValueAtTime(.0005,t+.05);
+    o.connect(f).connect(gg).connect(master); o.start(t); setTimeout(drops, 180+Math.random()*700); })();
+  rainNode={stop(){src.stop();}};
 }
 function burst(dur, f1, f2, q, vol, type='bandpass'){
   const c=audio(), t=c.currentTime, s=c.createBufferSource(); s.buffer=noiseBuffer(dur,'white');
@@ -122,7 +127,7 @@ function play(sound){ if(muted||!sound) return; if(SFX[sound]) return SFX[sound]
 
 /* ============ СЦЕНА ============ */
 const scene=document.getElementById('scene'), tip=document.getElementById('tip'), modal=document.getElementById('modal');
-document.title = 'Сумерки · '+SCENE.title; document.getElementById('gtitle').textContent=SCENE.title;
+document.title = SCENE.title+' · '+SCENE.subtitle; document.getElementById('gtitle').textContent=SCENE.title; document.getElementById('gsub').textContent=SCENE.subtitle;
 scene.style.setProperty('--ar', SCENE.aspect);
 const bg=new Image(); bg.className='bg'; bg.src=SCENE.image; bg.alt=SCENE.title; scene.appendChild(bg);
 SCENE.hotspots.forEach(h=>{
