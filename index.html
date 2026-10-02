@@ -70,7 +70,11 @@ const SCENE = {
       text:"Ne tuhaf bir resim… Bir bale stüdyosuna benziyor.",
       image:"painting.jpg", caption:"", sound:"" },
     { id:"tv", x:95.5, y:13.5, w:4.5, h:21,
-      text:"Televizyonun etrafına da bir bakayım.", image:"", caption:"", sound:"" },
+      text:"Televizyonun etrafına da bir bakayım.", image:"tv.jpg", caption:"", sound:"" },
+    { id:"window", x:76, y:0, w:17, h:25,
+      text:"Tipik Forks, yağmur, yağmur, yine yağmur.", image:"", caption:"", sound:"" },
+    { id:"sink", x:37.5, y:17, w:7.5, h:11,
+      text:"Diş fırçası ve tıraş bıçağı… İlginç bir şey yok. Yine de lavabonun altına bir baksam mı?", image:"", caption:"", sound:"" },
     { id:"pillows", x:6, y:27.5, w:27, h:12,
       text:"Yastığın altına bir şey saklamış olabilir mi?", image:"", caption:"", sound:"rustle" },
     { id:"clothes", x:14, y:39.5, w:30, h:21,
@@ -79,14 +83,16 @@ const SCENE = {
     { id:"charger", x:2.5, y:47, w:8, h:19,
       text:"Şarj aleti burada ama telefon ortada yok…", image:"", caption:"", sound:"" },
     { id:"bag", x:7, y:63, w:35, h:32,
-      text:"Bennet burada olsaydı bakmayı cesaret etmezdim ama çıktığına göre bir göz atsam iyi olur.",
+      text:"Bennet burada olsaydı içine bakmaya cesaret edemezdim. Ama dışarı çıktığına göre bir göz atabilirim.",
       image:"", caption:"", sound:"rustle" },
     { id:"map", x:61, y:59.5, w:27, h:25,
       text:"Olimpik Yarımadası'nın haritası. Üzerine bir sürü işaret koymuş. Acaba neyi araştırıyordu?",
       image:"", caption:"", sound:"paper" },
-    { id:"lens", x:74, y:48, w:17, h:11,
+    { id:"lens", x:74, y:48, w:14.5, h:11,
       text:"Vay be, şu objektife bak! İşte buna para verilir! Keşke buna bütçem yetse…",
-      image:"", caption:"", sound:"" }
+      image:"", caption:"", sound:"" },
+    { id:"mug", x:89, y:54, w:7, h:11,
+      text:"Kahvesine dokunmadan çıkıp gitmiş. Belli ki acelesi vardı.", image:"", caption:"", sound:"" }
   ]
 };
 const EDIT = new URLSearchParams(location.search).has('edit');
