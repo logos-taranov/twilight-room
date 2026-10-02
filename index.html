@@ -83,12 +83,14 @@ const SCENE = {
     { id:"sink", x:37.5, y:17, w:7.5, h:11,
       text:"Diş fırçası ve tıraş bıçağı… İlginç bir şey yok. Yine de lavabonun altına bir baksam mı?", view:"sink", sound:"drawer" },
     { id:"pillows", x:6, y:27.5, w:27, h:12,
-      text:"Yastığın altına bir şey saklamış olabilir mi?", image:"", caption:"", sound:"rustle" },
+      text:"Yastığın altına bir şey saklamış olabilir mi?", image:"pillows.jpg", caption:"Hiçbir şey yokmuş...", sound:"rustle" },
     { id:"clothes", x:14, y:39.5, w:30, h:21,
       text:"Bu markayı biliyorum. Günlük kıyafetler gibi görünüyor ama tek bir ceketi iki aylık maaşım kadar.",
       image:"", caption:"", sound:"rustle" },
     { id:"charger", x:2.5, y:47, w:8, h:19,
       text:"Şarj aleti burada ama telefon ortada yok…", image:"", caption:"", sound:"" },
+    { id:"nightstand", x:0, y:37, w:8.5, h:10,
+      text:"Komodinin içinde ne var?", image:"drawer.jpg", caption:"Komodinler boş.", sound:"drawer" },
     { id:"bag", x:7, y:63, w:35, h:32,
       text:"Bennet burada olsaydı içine bakmaya cesaret edemezdim. Ama dışarı çıktığına göre bir göz atabilirim.",
       view:"bag", sound:"rustle" },
@@ -113,7 +115,9 @@ const VIEWS = {
                 inner:[ { id:"photoback", x:0, y:0, w:100, h:100, text:"", sound:"paper", action:"takePhoto" } ] },
   idcard:     { image:"idcard.jpg", caption:"Park çalışanına ait bir kimlik kartı…",
                 inner:[ { id:"card", x:30, y:20, w:61, h:53, text:"Kartı al", sound:"", action:"takeCard" } ] },
-  sink:       { image:"undersink.jpg", caption:"" }
+  sink:       { image:"undersink.jpg", caption:"",
+                inner:[ { id:"towels", x:18, y:46, w:54, h:36, text:"", sound:"rustle",
+                  next:{ image:"money.jpg", caption:"Tam sekiz bin dolar… Bu kadar parayı böyle ucuz bir motelde bırakıp gitmiş. Hem de havluların arkasına saklayarak!" } } ] }
 };
 const STATE = { photoTaken:false, cardTaken:false, locked:false };
 const ACTIONS = {
