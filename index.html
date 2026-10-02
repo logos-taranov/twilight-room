@@ -17,7 +17,7 @@
   .hot:hover, .hot.focus { box-shadow: 0 0 22px 6px var(--glow) inset, 0 0 18px 2px var(--glow);
     background: rgba(200,230,220,.06); }
   body.edit .hot { outline: 1px dashed #ffd27a; }
-  #tip { position:fixed; pointer-events:none; max-width:340px; padding:12px 16px; font-size:16px; line-height:1.45;
+  #tip { z-index:15 !important; position:fixed; pointer-events:none; max-width:340px; padding:12px 16px; font-size:16px; line-height:1.45;
     background:#ffffff; color:#1b1b1b; border-radius:4px;
     box-shadow:0 8px 28px rgba(0,0,0,.55); opacity:0; transition:opacity .25s; font-style:italic; z-index:5; }
   #tip.on { opacity:1; }
@@ -26,6 +26,8 @@
   #modal.on { display:flex; animation: fade .35s ease; }
   @keyframes fade { from { opacity:0 } to { opacity:1 } }
   #modal figure { margin:0; max-width:92vw; max-height:92vh; text-align:center; }
+  #mframe { position:relative; display:inline-block; line-height:0; }
+  #mframe .hot { z-index:2; }
   #modal img { max-width:92vw; max-height:78vh; border-radius:6px; box-shadow:0 10px 50px rgba(0,0,0,.8);
     filter:saturate(.85); }
   #modal figcaption { margin-top:14px; font-size:17px; font-style:italic; color:#cfdcd7; }
@@ -47,7 +49,7 @@
 <body>
 <div id="stage"><div id="scene"></div></div>
 <div id="tip"></div>
-<div id="modal"><figure><img id="mimg" alt=""><figcaption id="mcap"></figcaption></figure></div>
+<div id="modal"><figure><div id="mframe"><img id="mimg" alt=""></div><figcaption id="mcap"></figcaption></figure></div>
 <div id="close">×</div>
 <div id="mute" title="Звук">🔊</div>
 <div id="gate"><h1 id="gtitle">Sedar Creek Motel</h1><h2 id="gsub">Avcının odası</h2><p>Girmek için tıklayın 🔊</p></div>
@@ -64,13 +66,17 @@ const SCENE = {
   subtitle: "Avcının odası",
   image: "room.jpg",
   aspect: 1280/853,
-  rain: "rain",                // "rain" = синтезированный дождь; либо ссылка на свой файл
+  rain: "rain.mp3",            // свой файл дождя (из видео Марии); "rain" = синтезированный
   hotspots: [
     { id:"painting", x:9, y:0.5, w:19, h:16,
       text:"Ne tuhaf bir resim… Bir bale stüdyosuna benziyor.",
       image:"painting.jpg", caption:"", sound:"" },
     { id:"tv", x:95.5, y:13.5, w:4.5, h:21,
-      text:"Televizyonun etrafına da bir bakayım.", image:"tv.jpg", caption:"", sound:"" },
+      text:"Televizyonun etrafına da bir bakayım.", image:"tv.jpg",
+      caption:"Televizyonu yeni oynatmışlar galiba. Bir bakayım…", sound:"",
+      inner:[ { id:"tvscreen", x:70, y:0, w:30, h:37, text:"", sound:"",
+        next:{ image:"notebook.jpg", caption:"",
+          inner:[ { id:"notebook", x:49, y:45, w:27, h:19, text:"Defteri al", sound:"rustle", action:"take" } ] } } ] },
     { id:"window", x:76, y:0, w:17, h:25,
       text:"Tipik Forks, yağmur, yağmur, yine yağmur.", image:"", caption:"", sound:"" },
     { id:"sink", x:37.5, y:17, w:7.5, h:11,
@@ -89,7 +95,7 @@ const SCENE = {
       text:"Olimpik Yarımadası'nın haritası. Üzerine bir sürü işaret koymuş. Acaba neyi araştırıyordu?",
       image:"", caption:"", sound:"paper" },
     { id:"lens", x:74, y:48, w:14.5, h:11,
-      text:"Vay be, şu objektife bak! İşte buna para verilir! Keşke buna bütçem yetse…",
+      text:"Vay be, şu objektife bak! İşte buna para verilir! Keşke bütçem yetse…",
       image:"", caption:"", sound:"" },
     { id:"mug", x:89, y:54, w:7, h:11,
       text:"Kahvesine dokunmadan çıkıp gitmiş. Belli ki acelesi vardı.", image:"", caption:"", sound:"" }
@@ -115,7 +121,15 @@ function pinkBuffer(sec){
 }
 function startRain(){
   const c=audio();
-  if(SCENE.rain && SCENE.rain!=='rain'){ const a=new Audio(SCENE.rain); a.loop=true; a.volume=.35; a.play(); rainNode={stop:()=>a.pause(), el:a}; return; }
+  if(SCENE.rain && SCENE.rain!=='rain'){
+    // файл дождя: бесшовная петля через Web Audio, мягкое нарастание
+    const g=c.createGain(); g.gain.value=0; g.connect(master);
+    fetch(SCENE.rain).then(r=>r.arrayBuffer()).then(buf=>c.decodeAudioData(buf)).then(ab=>{
+      const src=c.createBufferSource(); src.buffer=ab; src.loop=true; src.connect(g); src.start();
+      g.gain.setValueAtTime(0,c.currentTime); g.gain.linearRampToValueAtTime(.8, c.currentTime+4);
+      rainNode={stop(){src.stop();}};
+    }).catch(()=>{ SCENE.rain='rain'; startRain(); });
+    return; }
   // мягкий ровный шелест: розовый шум, срезанные верха, медленное «дыхание» громкости
   const src=c.createBufferSource(); src.buffer=pinkBuffer(6); src.loop=true;
   const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1600; lp.Q.value=.3;
@@ -165,18 +179,31 @@ const scene=document.getElementById('scene'), tip=document.getElementById('tip')
 document.title = SCENE.title+' · '+SCENE.subtitle; document.getElementById('gtitle').textContent=SCENE.title; document.getElementById('gsub').textContent=SCENE.subtitle;
 scene.style.setProperty('--ar', SCENE.aspect);
 const bg=new Image(); bg.className='bg'; bg.src=SCENE.image; bg.alt=SCENE.title; scene.appendChild(bg);
-SCENE.hotspots.forEach(h=>{
+const mframe=document.getElementById('mframe'), mimg=document.getElementById('mimg'), mcap=document.getElementById('mcap');
+function makeHot(h, parent, onClick){
   const el=document.createElement('div'); el.className='hot'; el.dataset.id=h.id;
   Object.assign(el.style,{left:h.x+'%',top:h.y+'%',width:h.w+'%',height:h.h+'%'});
-  el.addEventListener('mouseenter',e=>{ if(EDIT) return; tip.textContent=h.text; tip.classList.add('on'); });
-  el.addEventListener('mousemove',e=>{ tip.style.left=Math.min(e.clientX+16, innerWidth-320)+'px'; tip.style.top=(e.clientY+18)+'px'; });
+  el.addEventListener('mouseenter',e=>{ if(EDIT||!h.text) return; tip.textContent=h.text; tip.classList.add('on'); });
+  el.addEventListener('mousemove',e=>{ tip.style.left=Math.min(e.clientX+16, innerWidth-360)+'px'; tip.style.top=(e.clientY+18)+'px'; });
   el.addEventListener('mouseleave',()=>tip.classList.remove('on'));
-  el.addEventListener('click',e=>{ if(EDIT) return; e.stopPropagation(); tip.classList.remove('on'); play(h.sound);
-    if(h.image){ document.getElementById('mimg').src=h.image; document.getElementById('mcap').textContent=h.caption||''; modal.classList.add('on'); } });
-  scene.appendChild(el);
-});
-SCENE.hotspots.forEach(h=>{ if(h.image){ const p=new Image(); p.src=h.image; } });
-function closeModal(){ modal.classList.remove('on'); }
+  el.addEventListener('click',e=>{ if(EDIT) return; e.stopPropagation(); tip.classList.remove('on'); play(h.sound); onClick(h); });
+  parent.appendChild(el); return el;
+}
+function openView(v){   // v = {image, caption, inner}
+  mframe.querySelectorAll('.hot').forEach(x=>x.remove());
+  mimg.src=v.image; mcap.textContent=v.caption||'';
+  (v.inner||[]).forEach(h=>makeHot(h, mframe, innerClick));
+  modal.classList.add('on');
+}
+function innerClick(h){
+  if(h.next) return openView(h.next);
+  if(h.action==='take'){ closeModal(); return; }
+  closeModal();
+}
+SCENE.hotspots.forEach(h=>{ makeHot(h, scene, h=>{ if(h.image) openView(h); }); });
+function preload(v){ if(v.image){ const p=new Image(); p.src=v.image; } (v.inner||[]).forEach(i=>i.next&&preload(i.next)); }
+SCENE.hotspots.forEach(preload);
+function closeModal(){ modal.classList.remove('on'); tip.classList.remove('on'); }
 modal.addEventListener('click',closeModal); document.getElementById('close').addEventListener('click',closeModal);
 addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 document.getElementById('gate').addEventListener('click',function(){ audio().resume(); play('door'); setTimeout(startRain, 900); this.classList.add('off'); });
