@@ -66,7 +66,7 @@ const SCENE = {
   ]
 };
 const VIEWS = {
-  cameras: { image:"cameras.jpg", caption:"",
+  cameras: { image:"cameras.jpg", caption:"", ambience:"laundry.mp3",
              inner:[ { id:"monitor", x:17, y:4, w:69, h:78, text:"Çamaşırhane kamera kaydını izle", go:"video" } ] },
   video:   { video:true, caption:"Burada bir tuhaflık var..." }
 };
@@ -82,6 +82,15 @@ function startRain(){
     const s=c.createBufferSource(); s.buffer=buf; s.loop=true; s.connect(rainGain); s.start();
     rainGain.gain.linearRampToValueAtTime(SCENE.rainVolume, c.currentTime+4);
   }).catch(()=>{});
+}
+let laundryGain=null, laundryReady=null;
+function laundry(on){
+  const c=audio();
+  if(!laundryGain){ laundryGain=c.createGain(); laundryGain.gain.value=0; laundryGain.connect(master);
+    laundryReady=fetch('laundry.mp3').then(r=>r.arrayBuffer()).then(b=>c.decodeAudioData(b)).then(buf=>{
+      const s=c.createBufferSource(); s.buffer=buf; s.loop=true; s.connect(laundryGain); s.start(); }).catch(()=>{}); }
+  const t=c.currentTime; laundryGain.gain.cancelScheduledValues(t); laundryGain.gain.setValueAtTime(laundryGain.gain.value,t);
+  laundryGain.gain.linearRampToValueAtTime(on?0.85:0, t+(on?.8:.5));
 }
 function duck(on){ if(!rainGain) return; const t=audio().currentTime; rainGain.gain.cancelScheduledValues(t);
   rainGain.gain.setValueAtTime(rainGain.gain.value,t); rainGain.gain.linearRampToValueAtTime(on?0.06:SCENE.rainVolume, t+.6); }
@@ -104,13 +113,13 @@ function makeHot(h, parent, onClick){
 let current=null;
 function openView(v){
   current=v; mframe.querySelectorAll('.hot').forEach(x=>x.remove());
-  if(v.video){ mimg.style.display='none'; mvid.style.display='block'; mvid.currentTime=0; duck(true); mvid.muted=muted; mvid.play().catch(()=>{}); }
-  else { mvid.pause(); mvid.style.display='none'; mimg.style.display='block'; mimg.src=v.image; duck(false); }
+  if(v.video){ mimg.style.display='none'; mvid.style.display='block'; mvid.currentTime=0; duck(true); laundry(false); mvid.muted=muted; mvid.play().catch(()=>{}); }
+  else { mvid.pause(); mvid.style.display='none'; mimg.style.display='block'; mimg.src=v.image; duck(!!v.ambience); laundry(v.ambience==='laundry.mp3'); }
   mcap.textContent=v.caption||'';
   (v.inner||[]).forEach(h=>makeHot(h, mframe, h=>openView(VIEWS[h.go])));
   modal.classList.add('on');
 }
-function closeModal(){ mvid.pause(); duck(false); modal.classList.remove('on'); tip.classList.remove('on'); current=null; }
+function closeModal(){ mvid.pause(); duck(false); if(laundryGain) laundry(false); modal.classList.remove('on'); tip.classList.remove('on'); current=null; }
 SCENE.hotspots.forEach(h=>makeHot(h, scene, h.click ? (h=>openView(VIEWS[h.click])) : null));
 /* видео закрывается ТОЛЬКО крестиком; картинка камер — ещё и щелчком мимо / Esc */
 modal.addEventListener('click',e=>{ if(current && !current.video && e.target===modal) closeModal(); });
