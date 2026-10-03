@@ -9,8 +9,23 @@
   * { box-sizing:border-box; }
   html,body { margin:0; height:100%; background:#0b1110; color:var(--ink);
     font-family: Georgia, "Times New Roman", serif; overflow:hidden; }
-  #stage { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
-  #scene { position:relative; width:min(100vw, calc(100vh * var(--ar))); aspect-ratio: var(--ar); }
+  #stage { position:fixed; inset:0 var(--invw) 0 0; display:flex; align-items:center; justify-content:center; }
+  :root { --invw:118px; }
+  #scene { position:relative; width:min(calc(100vw - var(--invw)), calc(100vh * var(--ar))); aspect-ratio: var(--ar); }
+  #inv { position:fixed; top:0; right:0; bottom:0; width:var(--invw); z-index:6; display:flex; flex-direction:column;
+    justify-content:center; gap:14px; padding:12px; background:linear-gradient(90deg,rgba(10,16,15,.0),rgba(10,16,15,.85) 30%);
+    border-left:1px solid rgba(160,190,180,.18); }
+  #inv .slot { width:100%; aspect-ratio:1; border:1px dashed rgba(170,200,190,.28); border-radius:8px; display:flex;
+    align-items:center; justify-content:center; overflow:hidden; background:rgba(255,255,255,.03); }
+  #inv .slot img { max-width:92%; max-height:92%; border-radius:4px; box-shadow:0 4px 14px rgba(0,0,0,.6); animation:pop .5s ease; }
+  @keyframes pop { from { transform:scale(.4); opacity:0 } to { transform:scale(1); opacity:1 } }
+  .hint { position:absolute; left:50%; top:6%; transform:translateX(-50%); z-index:3; background:#fff; color:#1b1b1b;
+    padding:10px 16px; border-radius:4px; font-size:16px; font-style:italic; line-height:1.3; white-space:nowrap;
+    box-shadow:0 8px 28px rgba(0,0,0,.55); pointer-events:none; animation:fade .5s ease; }
+  #final { position:absolute; left:50%; bottom:6%; transform:translateX(-50%); z-index:4; background:#fff; color:#1b1b1b;
+    padding:12px 20px; border-radius:4px; font-size:18px; font-style:italic; box-shadow:0 8px 28px rgba(0,0,0,.6);
+    pointer-events:none; display:none; }
+  #final.on { display:block; animation:fade 1s ease; }
   #scene > .bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
     filter: saturate(.8) brightness(.92); user-select:none; -webkit-user-drag:none; }
   .hot { position:absolute; cursor:pointer; border-radius:10px; transition: box-shadow .35s, background .35s; }
@@ -48,7 +63,8 @@
 </style>
 </head>
 <body>
-<div id="stage"><div id="scene"></div></div>
+<div id="stage"><div id="scene"><div id="final"></div></div></div>
+<div id="inv"><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>
 <div id="tip"></div>
 <div id="modal"><figure><div id="mframe"><img id="mimg" alt=""></div><figcaption id="mcap"></figcaption></figure></div>
 <div id="close">×</div>
@@ -77,26 +93,26 @@ const SCENE = {
       caption:"Televizyonu yeni oynatmışlar galiba. Bir bakayım…", sound:"",
       inner:[ { id:"tvscreen", x:50, y:0, w:50, h:60, text:"", sound:"",
         next:{ image:"notebook.jpg", caption:"",
-          inner:[ { id:"notebook", x:49, y:45, w:27, h:19, text:"Defteri al", sound:"rustle", action:"take" } ] } } ] },
+          inner:[ { id:"notebook", x:49, y:45, w:27, h:19, text:"Defteri al", sound:"", action:"takeNotebook" } ] } } ] },
     { id:"window", x:76, y:0, w:17, h:25,
       text:"Tipik Forks, yağmur, yağmur, yine yağmur.", image:"", caption:"", sound:"" },
     { id:"sink", x:37.5, y:17, w:7.5, h:11,
       text:"Diş fırçası ve tıraş bıçağı… İlginç bir şey yok. Yine de lavabonun altına bir baksam mı?", view:"sink", sound:"drawer" },
     { id:"pillows", x:6, y:27.5, w:27, h:12,
-      text:"Yastığın altına bir şey saklamış olabilir mi?", image:"pillows.jpg", caption:"Hiçbir şey yokmuş...", sound:"rustle" },
+      text:"Yastığın altına bir şey saklamış olabilir mi?", image:"pillows.jpg", caption:"Hiçbir şey yokmuş...", sound:"snd_pillow.mp3", closeSound:"snd_pillow.mp3" },
     { id:"clothes", x:14, y:39.5, w:30, h:21,
       text:"Bu markayı biliyorum. Günlük kıyafetler gibi görünüyor ama tek bir ceketi iki aylık maaşım kadar.",
       image:"", caption:"", sound:"rustle" },
     { id:"charger", x:2.5, y:47, w:8, h:19,
       text:"Şarj aleti burada ama telefon ortada yok…", image:"", caption:"", sound:"" },
     { id:"nightstand", x:0, y:37, w:8.5, h:10,
-      text:"Komodinin içinde ne var?", image:"drawer.jpg", caption:"Komodinler boş.", sound:"drawer" },
+      text:"Komodinin içinde ne var?", image:"drawer.jpg", caption:"Komodinler boş.", sound:"snd_drawer.mp3", closeSound:"snd_drawer.mp3" },
     { id:"bag", x:7, y:63, w:35, h:32,
       text:"Bennet burada olsaydı içine bakmaya cesaret edemezdim. Ama dışarı çıktığına göre bir göz atabilirim.",
       view:"bag", sound:"rustle" },
     { id:"map", x:61, y:59.5, w:27, h:25,
       text:"Olimpik Yarımadası'nın haritası. Üzerine bir sürü işaret koymuş. Acaba neyi araştırıyordu?",
-      image:"", caption:"", sound:"paper" },
+      image:"map.jpg", caption:"", sound:"snd_paper.mp3" },
     { id:"lens", x:74, y:48, w:14.5, h:11,
       text:"Vay be, şu objektife bak! İşte buna para verilir! Keşke bütçem yetse…",
       image:"", caption:"", sound:"" },
@@ -109,7 +125,7 @@ const SCENE = {
 const VIEWS = {
   bag:        { image:"bag.jpg", caption:"",
                 inner:[ { id:"bagin", x:8, y:8, w:84, h:82, text:"", sound:"rustle", action:"bagSearch" } ] },
-  photoFront: { image:"photo_front.jpg", caption:"Ne mutlu bir çift! Neresi acaba?",
+  photoFront: { image:"photo_front.jpg", caption:"Ne mutlu bir çift! Neresi acaba?", hint:"Arkasına bak",
                 inner:[ { id:"photo", x:25, y:19, w:70, h:57, text:"", sound:"paper", go:"photoBack" } ] },
   photoBack:  { image:"photo_back.jpg", caption:"Glacier… Ha, Montana’daki o kocaman milli park. Bu fotoğrafı yanıma alayım, işime yarar.",
                 inner:[ { id:"photoback", x:0, y:0, w:100, h:100, text:"", sound:"paper", action:"takePhoto" } ] },
@@ -119,11 +135,26 @@ const VIEWS = {
                 inner:[ { id:"towels", x:18, y:46, w:54, h:36, text:"", sound:"rustle",
                   next:{ image:"money.jpg", caption:"Tam sekiz bin dolar… Bu kadar parayı böyle ucuz bir motelde bırakıp gitmiş. Hem de havluların arkasına saklayarak!" } } ] }
 };
-const STATE = { photoTaken:false, cardTaken:false, locked:false };
+const STATE = { photoTaken:false, cardTaken:false, notebookTaken:false, locked:false };
+/* Инвентарь: 3 предмета, картинки появляются по мере сбора; все три → мысль на общем плане. */
+const ITEMS = { photo:"inv_photo.jpg", card:"inv_card.jpg", notebook:"inv_notebook.jpg" };
+const FINAL_THOUGHT = "Sanırım yeterince gördüm.";
+const PICKUP_SOUND = "snd_pickup.mp3";
+const collected = [];
+function collect(key){
+  if(collected.includes(key)) return;
+  collected.push(key); play(PICKUP_SOUND);
+  const slot=document.querySelectorAll('#inv .slot')[collected.length-1];
+  if(slot){ const im=new Image(); im.src=ITEMS[key]; im.alt=key; slot.appendChild(im); }
+}
+function maybeFinal(){
+  if(collected.length===Object.keys(ITEMS).length){ const f=document.getElementById('final'); f.textContent=FINAL_THOUGHT; f.classList.add('on'); }
+}
 const ACTIONS = {
   bagSearch(){ if(!STATE.photoTaken) return openView(VIEWS.photoFront); if(!STATE.cardTaken) return openView(VIEWS.idcard); },
-  takePhoto(){ STATE.photoTaken=true; STATE.locked=true; openView(VIEWS.bag); },
-  takeCard(){ STATE.cardTaken=true; STATE.locked=false; document.body.classList.remove('locked'); closeModal(); },
+  takePhoto(){ STATE.photoTaken=true; collect('photo'); STATE.locked=true; openView(VIEWS.bag); },
+  takeCard(){ STATE.cardTaken=true; collect('card'); STATE.locked=false; document.body.classList.remove('locked'); closeModal(); },
+  takeNotebook(){ STATE.notebookTaken=true; collect('notebook'); closeModal(); },
   take(){ closeModal(); }
 };
 const EDIT = new URLSearchParams(location.search).has('edit');
@@ -197,7 +228,10 @@ const SFX = {
   glass(){ const c=audio(), t=c.currentTime; [1760,2637,3520].forEach((fq,i)=>{ const o=c.createOscillator(), g=c.createGain();
     o.frequency.value=fq; g.gain.setValueAtTime(.08/(i+1),t); g.gain.exponentialRampToValueAtTime(.0005,t+1.4); o.connect(g).connect(master); o.start(t); o.stop(t+1.5); }); }
 };
-function play(sound){ if(muted||!sound) return; if(SFX[sound]) return SFX[sound](); const a=new Audio(sound); a.volume=.9; a.play().catch(()=>{}); }
+const _sndCache={};
+function loadSound(url){ if(!_sndCache[url]) _sndCache[url]=fetch(url).then(r=>r.arrayBuffer()).then(b=>audio().decodeAudioData(b)); return _sndCache[url]; }
+function play(sound){ if(muted||!sound) return; if(SFX[sound]) return SFX[sound]();
+  loadSound(sound).then(buf=>{ const c=audio(), s=c.createBufferSource(), g=c.createGain(); g.gain.value=.9; s.buffer=buf; s.connect(g).connect(master); s.start(); }).catch(()=>{}); }
 
 /* ============ СЦЕНА ============ */
 const scene=document.getElementById('scene'), tip=document.getElementById('tip'), modal=document.getElementById('modal');
@@ -214,9 +248,12 @@ function makeHot(h, parent, onClick){
   el.addEventListener('click',e=>{ if(EDIT) return; e.stopPropagation(); tip.classList.remove('on'); play(h.sound); onClick(h); });
   parent.appendChild(el); return el;
 }
-function openView(v){   // v = {image, caption, inner}
+let currentCloseSound=null;
+function openView(v){   // v = {image, caption, inner, hint, closeSound}
   document.body.classList.toggle('locked', STATE.locked);
-  mframe.querySelectorAll('.hot').forEach(x=>x.remove());
+  mframe.querySelectorAll('.hot,.hint').forEach(x=>x.remove());
+  if(v.hint){ const h=document.createElement('div'); h.className='hint'; h.textContent=v.hint; mframe.appendChild(h); }
+  currentCloseSound=v.closeSound||null;
   mimg.src=v.image; mcap.textContent=v.caption||'';
   (v.inner||[]).forEach(h=>makeHot(h, mframe, innerClick));
   modal.classList.add('on');
@@ -229,11 +266,15 @@ function innerClick(h){
 }
 SCENE.hotspots.forEach(h=>{ makeHot(h, scene, h=>{ if(h.view) openView(VIEWS[h.view]); else if(h.image) openView(h); }); });
 function preload(v){ if(v.image){ const p=new Image(); p.src=v.image; } (v.inner||[]).forEach(i=>i.next&&preload(i.next)); }
+Object.values(ITEMS).forEach(u=>{ const p=new Image(); p.src=u; });
 SCENE.hotspots.forEach(preload); Object.values(VIEWS).forEach(preload);
-function closeModal(){ if(STATE.locked) return; modal.classList.remove('on'); tip.classList.remove('on'); }
+function closeModal(){ if(STATE.locked) return; if(!modal.classList.contains('on')) return;
+  modal.classList.remove('on'); tip.classList.remove('on');
+  if(currentCloseSound){ play(currentCloseSound); currentCloseSound=null; }
+  maybeFinal(); }
 modal.addEventListener('click',closeModal); document.getElementById('close').addEventListener('click',closeModal);
 addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
-document.getElementById('gate').addEventListener('click',function(){ audio().resume(); startRain(); this.classList.add('off'); });
+document.getElementById('gate').addEventListener('click',function(){ audio().resume(); startRain(); ['snd_drawer.mp3','snd_pillow.mp3','snd_paper.mp3',PICKUP_SOUND].forEach(loadSound); this.classList.add('off'); });
 document.getElementById('mute').addEventListener('click',function(){ muted=!muted; master.gain.value=muted?0:1; if(rainNode&&rainNode.el) rainNode.el.muted=muted; this.textContent=muted?'🔇':'🔊'; });
 
 /* ============ РЕЖИМ РАЗМЕТКИ (?edit=1) ============ */
