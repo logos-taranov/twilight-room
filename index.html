@@ -125,8 +125,8 @@ const SCENE = {
 const VIEWS = {
   bag:        { image:"bag.jpg", caption:"",
                 inner:[ { id:"bagin", x:8, y:8, w:84, h:82, text:"", sound:"rustle", action:"bagSearch" } ] },
-  photoFront: { image:"photo_front.jpg", caption:"Ne mutlu bir çift! Neresi acaba?", hint:"Arkasına bak",
-                inner:[ { id:"photo", x:25, y:19, w:70, h:57, text:"", sound:"paper", go:"photoBack" } ] },
+  photoFront: { image:"photo_front.jpg", caption:"Ne mutlu bir çift! Neresi acaba?",
+                inner:[ { id:"photo", x:25, y:19, w:70, h:57, text:"Arkasına bak", sound:"paper", go:"photoBack" } ] },
   photoBack:  { image:"photo_back.jpg", caption:"Glacier… Ha, Montana’daki o kocaman milli park. Bu fotoğrafı yanıma alayım, işime yarar.",
                 inner:[ { id:"photoback", x:0, y:0, w:100, h:100, text:"", sound:"paper", action:"takePhoto" } ] },
   idcard:     { image:"idcard.jpg", caption:"Park çalışanına ait bir kimlik kartı…",
@@ -137,7 +137,12 @@ const VIEWS = {
 };
 const STATE = { photoTaken:false, cardTaken:false, notebookTaken:false, locked:false };
 /* Инвентарь: 3 предмета, картинки появляются по мере сбора; все три → мысль на общем плане. */
-const ITEMS = { photo:"inv_photo.jpg", card:"inv_card.jpg", notebook:"inv_notebook.jpg" };
+const ITEMS = { photo:"inv_photo.png", card:"inv_card.png", notebook:"inv_notebook.png" };
+const ITEM_TEXT = {
+  photo:"Adamın çantasında bulduğum fotoğraf. Arkasında 'Dave & Sarah, Glacier 1986' diyor",
+  notebook:"Televizyonun altında bulduğum gizemli mavi defter. Ona daha sonra döneceğim",
+  card:"Tarihi geçmiş bir park görevlisi kartı. David Reed adlı birine ait"
+};
 const FINAL_THOUGHT = "Sanırım yeterince gördüm.";
 const PICKUP_SOUND = "snd_pickup.mp3";
 const collected = [];
@@ -145,10 +150,15 @@ function collect(key){
   if(collected.includes(key)) return;
   collected.push(key); play(PICKUP_SOUND);
   const slot=document.querySelectorAll('#inv .slot')[collected.length-1];
-  if(slot){ const im=new Image(); im.src=ITEMS[key]; im.alt=key; slot.appendChild(im); }
+  if(slot){ const im=new Image(); im.src=ITEMS[key]; im.alt=key; slot.appendChild(im); slot.dataset.item=key;
+    slot.addEventListener('mouseenter',()=>{ tip.textContent=ITEM_TEXT[key]; tip.classList.add('on'); });
+    slot.addEventListener('mousemove',e=>{ tip.style.left=Math.max(8, e.clientX-356)+'px'; tip.style.top=(e.clientY+18)+'px'; });
+    slot.addEventListener('mouseleave',()=>tip.classList.remove('on')); }
 }
+const viewed = new Set();
 function maybeFinal(){
-  if(collected.length===Object.keys(ITEMS).length){ const f=document.getElementById('final'); f.textContent=FINAL_THOUGHT; f.classList.add('on'); }
+  const allSeen = SCENE.hotspots.every(h=>viewed.has(h.id));
+  if(collected.length===Object.keys(ITEMS).length && allSeen && !modal.classList.contains('on')){ const f=document.getElementById('final'); f.textContent=FINAL_THOUGHT; f.classList.add('on'); }
 }
 const ACTIONS = {
   bagSearch(){ if(!STATE.photoTaken) return openView(VIEWS.photoFront); if(!STATE.cardTaken) return openView(VIEWS.idcard); },
@@ -264,7 +274,9 @@ function innerClick(h){
   if(h.action && ACTIONS[h.action]) return ACTIONS[h.action](h);
   closeModal();
 }
-SCENE.hotspots.forEach(h=>{ makeHot(h, scene, h=>{ if(h.view) openView(VIEWS[h.view]); else if(h.image) openView(h); }); });
+SCENE.hotspots.forEach(h=>{ const el=makeHot(h, scene, h=>{ viewed.add(h.id); if(h.view) openView(VIEWS[h.view]); else if(h.image) openView(h); else maybeFinal(); });
+  el.addEventListener('mouseenter',()=>{ if(!EDIT) viewed.add(h.id); });
+  el.addEventListener('mouseleave',()=>maybeFinal()); });
 function preload(v){ if(v.image){ const p=new Image(); p.src=v.image; } (v.inner||[]).forEach(i=>i.next&&preload(i.next)); }
 Object.values(ITEMS).forEach(u=>{ const p=new Image(); p.src=u; });
 SCENE.hotspots.forEach(preload); Object.values(VIEWS).forEach(preload);
