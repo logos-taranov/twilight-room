@@ -112,7 +112,7 @@ const SCENE = {
       view:"bag", sound:"snd_bag.mp3" },
     { id:"map", x:61, y:59.5, w:27, h:25,
       text:"Olimpik Yarımadası'nın haritası. Üzerine bir sürü işaret koymuş. Acaba neyi araştırıyordu?",
-      image:"map.jpg", caption:"", sound:"snd_paper.mp3" },
+      image:"map.jpg", caption:"", sound:"snd_map.mp3" },
     { id:"lens", x:74, y:48, w:14.5, h:11,
       text:"Vay be, şu objektife bak! İşte buna para verilir! Keşke bütçem yetse…",
       image:"", caption:"", sound:"" },
@@ -128,7 +128,7 @@ const VIEWS = {
   photoFront: { image:"photo_front.jpg", caption:"Ne mutlu bir çift! Neresi acaba?",
                 inner:[ { id:"photo", x:25, y:19, w:70, h:57, text:"Arkasına bak", sound:"paper", go:"photoBack" } ] },
   photoBack:  { image:"photo_back.jpg", caption:"Glacier… Ha, Montana’daki o kocaman milli park. Bu fotoğrafı yanıma alayım, işime yarar.",
-                inner:[ { id:"photoback", x:0, y:0, w:100, h:100, text:"", sound:"paper", action:"takePhoto" } ] },
+                inner:[ { id:"photoback", x:0, y:0, w:100, h:100, text:"", sound:"", action:"takePhoto" } ] },
   idcard:     { image:"idcard.jpg", caption:"Park çalışanına ait bir kimlik kartı…",
                 inner:[ { id:"card", x:30, y:20, w:61, h:53, text:"Kartı al", sound:"", action:"takeCard" } ] },
   sink:       { image:"undersink.jpg", caption:"",
@@ -286,7 +286,7 @@ function closeModal(){ if(STATE.locked) return; if(!modal.classList.contains('on
   maybeFinal(); }
 modal.addEventListener('click',closeModal); document.getElementById('close').addEventListener('click',closeModal);
 addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
-document.getElementById('gate').addEventListener('click',function(){ audio().resume(); startRain(); ['snd_drawer.mp3','snd_pillow.mp3','snd_paper.mp3','snd_money.mp3','snd_bag.mp3',PICKUP_SOUND].forEach(loadSound); this.classList.add('off'); });
+document.getElementById('gate').addEventListener('click',function(){ audio().resume(); startRain(); ['snd_drawer.mp3','snd_pillow.mp3','snd_map.mp3','snd_money.mp3','snd_bag.mp3',PICKUP_SOUND].forEach(loadSound); this.classList.add('off'); });
 document.getElementById('mute').addEventListener('click',function(){ muted=!muted; master.gain.value=muted?0:1; if(rainNode&&rainNode.el) rainNode.el.muted=muted; this.textContent=muted?'🔇':'🔊'; });
 
 /* ============ РЕЖИМ РАЗМЕТКИ (?edit=1) ============ */
