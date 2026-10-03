@@ -15,6 +15,9 @@
   .hot.nozoom { cursor:crosshair; }
   .hot:hover { box-shadow: 0 0 22px 6px var(--glow) inset, 0 0 18px 2px var(--glow); background: rgba(200,230,220,.06); }
   body.edit .hot { outline:1px dashed #ffd27a; }
+  #tip { position:fixed; z-index:15; pointer-events:none; max-width:340px; padding:11px 15px; font-size:15px; line-height:1.45;
+    background:#fff; color:#1b1b1b; border-radius:4px; box-shadow:0 8px 28px rgba(0,0,0,.55); opacity:0; transition:opacity .2s; font-style:italic; }
+  #tip.on { opacity:1; }
   #note { position:absolute; left:50%; bottom:3.5%; transform:translateX(-50%); z-index:4; max-width:84%; text-align:center;
     background:#fff; color:#1b1b1b; padding:12px 20px; border-radius:4px; font-size:16px; font-style:italic; line-height:1.4;
     box-shadow:0 8px 28px rgba(0,0,0,.6); pointer-events:none; opacity:0; transition:opacity 1s; }
@@ -48,6 +51,7 @@
 <body>
 <div id="stage"><div id="scene"><div id="note"></div></div></div>
 <div id="inv"></div>
+<div id="tip"></div>
 <div id="flash"></div>
 <div id="modal"><figure><img id="mimg" alt=""><br><figcaption id="mcap"></figcaption></figure></div>
 <div id="close" title="Kapat">×</div>
@@ -61,12 +65,13 @@ const SCENE = {
   image:"main.jpg", aspect:1280/853,
   hint:"Bir nesneyi incelemek için sol fare tuşunu, fotoğrafını çekmek için sağ fare tuşunu kullanın.",
   final:"Sanırım bu kadar.",
+  ambience:"ambient.mp3", ambienceVolume:.7,
   hotspots:[
-    { id:"camera",  x:44, y:44.5, w:16, h:14, close:"camera_close.jpg",  caption:"Kamera ve objektif kırık, hafıza kartını göremiyorum.", photo:"photo_camera.jpg" },
-    { id:"pendant", x:8,  y:63,   w:9,  h:14, close:"pendant_close.jpg", caption:"Bu da ne böyle?", photo:"photo_pendant.jpg" },
-    { id:"blood",   x:63, y:46.5, w:18, h:12, close:"blood_close.jpg",   caption:"Bu David'in kanı mı yoksa?", photo:"photo_blood.jpg" },
-    { id:"cliff",   x:74, y:27,   w:22, h:19, close:"cliff_close.jpg",   caption:"Yükseklik korkum var. En iyisi kenardan uzak durmak.", photo:"photo_cliff.jpg" },
-    { id:"sunset",  x:83, y:8,    w:17, h:18, close:null, caption:"", photo:"photo_sunset.jpg" }
+    { id:"camera",  x:44, y:44.5, w:16, h:14, close:"camera_close.jpg",  caption:"Kamera ve objektif kırık, hafıza kartını göremiyorum.", photo:"photo_camera.jpg", invText:"Fotoğraf makinesi paramparça… Hafıza kartı da kayıp." },
+    { id:"pendant", x:8,  y:63,   w:9,  h:14, close:"pendant_close.jpg", caption:"Bu da ne böyle?", photo:"photo_pendant.jpg", invText:"Bunun ne olduğu hakkında hiçbir fikrim yok." },
+    { id:"blood",   x:63, y:46.5, w:18, h:12, close:"blood_close.jpg",   caption:"Bu David'in kanı mı yoksa?", photo:"photo_blood.jpg", invText:"Kan lekeleri. Burada ne oldu?" },
+    { id:"cliff",   x:74, y:27,   w:22, h:19, close:"cliff_close.jpg",   caption:"Yükseklik korkum var. En iyisi kenardan uzak durmak.", photo:"photo_cliff.jpg", invText:"David gerçekten buradan aşağı mı atladı?" },
+    { id:"sunset",  x:83, y:8,    w:17, h:18, close:null, caption:"", text:"Ne kadar güzel bir manzara", photo:"photo_sunset.jpg", invText:"Böyle bir manzarayı çekmeden geçemezdim. Her fotoğrafın delil olması gerekmiyor." }
   ]
 };
 const EDIT = new URLSearchParams(location.search).has('edit');
@@ -80,6 +85,14 @@ function burst(t, dur, freq, q, vol){
   for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
   const s=c.createBufferSource(); s.buffer=b; const f=c.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; f.Q.value=q;
   const g=c.createGain(); g.gain.value=vol; s.connect(f).connect(g).connect(master); s.start(t);
+}
+let ambGain=null;
+function startAmbience(){
+  const c=audio(); ambGain=c.createGain(); ambGain.gain.value=0; ambGain.connect(master);
+  fetch(SCENE.ambience).then(r=>r.arrayBuffer()).then(b=>c.decodeAudioData(b)).then(buf=>{
+    const s=c.createBufferSource(); s.buffer=buf; s.loop=true; s.connect(ambGain); s.start();
+    ambGain.gain.linearRampToValueAtTime(SCENE.ambienceVolume, c.currentTime+3);
+  }).catch(()=>{});
 }
 function shutter(){ if(muted) return; const t=audio().currentTime; burst(t,.035,3200,1.2,1.4); burst(t+.07,.05,1800,1.0,1.1); burst(t+.075,.02,5200,2,.6); }
 
@@ -96,6 +109,10 @@ const scene=document.getElementById('scene'), modal=document.getElementById('mod
 scene.style.setProperty('--ar', SCENE.aspect);
 const bg=new Image(); bg.className='bg'; bg.src=SCENE.image; bg.alt='Olay yerinde'; scene.prepend(bg);
 for(let i=0;i<SCENE.hotspots.length;i++){ const s=document.createElement('div'); s.className='slot'; inv.appendChild(s); }
+const tip=document.getElementById('tip');
+function tipOn(text){ if(!text) return; tip.textContent=text; tip.classList.add('on'); }
+function tipMove(e){ tip.style.left=Math.max(8, Math.min(e.clientX+16, innerWidth-360))+'px'; tip.style.top=Math.min(e.clientY+18, innerHeight-110)+'px'; }
+function tipOff(){ tip.classList.remove('on'); }
 let current=null;
 function openImage(src, caption, hot){ current=hot||null; mimg.src=src; mcap.textContent=caption||''; modal.classList.add('on'); }
 function closeModal(){ modal.classList.remove('on'); current=null; progress(); }
@@ -104,15 +121,19 @@ function takePhoto(h){
   shutter(); const fl=document.getElementById('flash'); fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on');
   shot.push(h.id);
   const slot=inv.children[shot.length-1]; const im=new Image(); im.src=h.photo; im.alt=h.id; im.dataset.id=h.id;
-  im.addEventListener('click',()=>openImage(h.photo,'',null)); slot.appendChild(im);
+  im.addEventListener('click',()=>{ tipOff(); openImage(h.photo,'',null); }); slot.appendChild(im);
+  im.addEventListener('mouseenter',()=>tipOn(h.invText));
+  im.addEventListener('mousemove',e=>{ tip.style.left=Math.max(8, e.clientX-356)+'px'; tip.style.top=Math.min(e.clientY+18, innerHeight-110)+'px'; });
+  im.addEventListener('mouseleave',tipOff);
   progress();
 }
 SCENE.hotspots.forEach(h=>{
   const el=document.createElement('div'); el.className='hot'+(h.close?'':' nozoom'); el.dataset.id=h.id;
   Object.assign(el.style,{left:h.x+'%',top:h.y+'%',width:h.w+'%',height:h.h+'%'});
-  el.addEventListener('mouseenter',()=>{ if(EDIT) return; hovered.add(h.id); });
-  el.addEventListener('mouseleave',()=>progress());
-  el.addEventListener('click',e=>{ e.stopPropagation(); if(!h.close) return; inspected.add(h.id); openImage(h.close,h.caption,h); });
+  el.addEventListener('mouseenter',()=>{ if(EDIT) return; hovered.add(h.id); tipOn(h.text); });
+  el.addEventListener('mousemove',tipMove);
+  el.addEventListener('mouseleave',()=>{ tipOff(); progress(); });
+  el.addEventListener('click',e=>{ e.stopPropagation(); tipOff(); if(!h.close) return; inspected.add(h.id); openImage(h.close,h.caption,h); });
   el.addEventListener('contextmenu',e=>{ e.preventDefault(); e.stopPropagation(); hovered.add(h.id); takePhoto(h); });
   scene.appendChild(el);
 });
@@ -124,7 +145,7 @@ addEventListener('keydown',e=>{ if(e.key==='Escape' && modal.classList.contains(
 addEventListener('contextmenu',e=>e.preventDefault());
 SCENE.hotspots.forEach(h=>{ [h.close,h.photo].forEach(u=>{ if(u){ const p=new Image(); p.src=u; } }); });
 document.getElementById('gate').addEventListener('click',function(){
-  audio().resume(); this.classList.add('off'); progress();
+  audio().resume(); startAmbience(); this.classList.add('off'); progress();
   setTimeout(()=>document.getElementById('note').classList.add('on'), 900);
 });
 document.getElementById('mute').addEventListener('click',function(){ muted=!muted; if(master) master.gain.value=muted?0:1; this.textContent=muted?'🔇':'🔊'; });
