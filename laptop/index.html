@@ -65,6 +65,9 @@
   #zoom.open { display:flex; }
   #zoom img { max-width:80vw; max-height:78vh; box-shadow:0 8px 30px rgba(0,0,0,.8); image-rendering:auto; }
   #zclose { position:fixed; top:12px; right:20px; font-size:36px; color:#e8e8e8; user-select:none; z-index:31; }
+  #zcap { position:fixed; left:50%; bottom:46px; transform:translateX(-50%); max-width:80vw; z-index:31;
+          font: italic 19px Georgia, 'Times New Roman', serif; color:#1b1b1b; background:#fff; padding:9px 16px; border-radius:4px;
+          box-shadow:0 2px 12px rgba(0,0,0,.6); text-align:center; pointer-events:none; line-height:1.35; }
   #vcap { position:fixed; left:50%; bottom:46px; transform:translateX(-50%); max-width:80vw; display:none; z-index:32;
           font: italic 19px Georgia, 'Times New Roman', serif; color:#1b1b1b; background:#fff; padding:9px 16px; border-radius:4px;
           box-shadow:0 2px 12px rgba(0,0,0,.6); text-align:center; pointer-events:none; line-height:1.35; }
@@ -92,7 +95,7 @@
   <div id="thought"></div>
 </div></div>
 <div id="viewer"><div id="vbox"><img id="vimg" src="sarah.jpg" alt=""><div id="vsym"></div></div><div id="vcap"></div><div id="vclose">✕</div><div class="nav" id="prev">‹</div><div class="nav" id="next">›</div><div id="counter"></div></div>
-<div id="zoom"><img src="symbol.jpg" alt=""><div id="zclose">✕</div></div>
+<div id="zoom"><img src="symbol.jpg" alt=""><div id="zcap">Bu sembolü daha önce görmüştüm!</div><div id="zclose">✕</div></div>
 <div id="mute" title="Ses">🔊</div>
 <script>
 const PASSWORD = 'glacier1986';            // case does not matter: Glacier1986 / GLACIER1986 / glacier1986
@@ -174,7 +177,7 @@ file.addEventListener('mousedown', e => { e.stopPropagation(); file.classList.ad
 file.addEventListener('dblclick', () => openViewer(['sarah.jpg'], 0));
 const vimg = document.getElementById('vimg'), counter = document.getElementById('counter');
 let gal = [], gi = 0;
-const vcap = document.getElementById('vcap'), vsym = document.getElementById('vsym');
+const vcap = document.getElementById('vcap'), vsym = document.getElementById('vsym'), zoomEl = document.getElementById('zoom');
 let caps = [], symAt = -1, symHover = false;
 function cap(t) { vcap.textContent = t || ''; vcap.style.display = t ? 'block' : 'none'; }
 function showGal() {
@@ -186,9 +189,9 @@ function openViewer(list, i, captions, symbolIndex) {
   showGal(); viewer.classList.toggle('gallery', list.length > 1); viewer.classList.add('open');
 }
 vsym.addEventListener('mouseenter', () => { symHover = true; cap('Bu sembolü daha önce görmüştüm!'); });
-vsym.addEventListener('mouseleave', () => { symHover = false; cap(caps[gi]); });
+vsym.addEventListener('mouseleave', () => { if (zoomEl.classList.contains('open')) return; symHover = false; cap(caps[gi]); });
 const zoom = document.getElementById('zoom');
-function closeZoom() { zoom.classList.remove('open'); cap(symHover ? 'Bu sembolü daha önce görmüştüm!' : caps[gi]); }
+function closeZoom() { zoom.classList.remove('open'); symHover = false; cap(caps[gi]); }
 vsym.addEventListener('click', e => { e.stopPropagation(); zoom.classList.add('open'); cap('Bu sembolü daha önce görmüştüm!'); });
 zoom.addEventListener('click', e => { e.stopPropagation(); closeZoom(); });
 function step(d) { if (gal.length < 2) return; gi = (gi + d + gal.length) % gal.length; showGal(); }
