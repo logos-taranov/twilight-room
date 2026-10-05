@@ -39,6 +39,10 @@
   #win img { width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
   #winclose, .wclose { position:absolute; left:92.4%; top:2%; width:6%; height:7.6%; }
   #vwin { position:absolute; left:30.2%; top:16.9%; width:44.1%; aspect-ratio:564/458; display:none; box-shadow:4px 6px 18px rgba(0,0,0,.55); }
+  #owin { position:absolute; left:25.7%; top:16.65%; width:52.66%; aspect-ratio:674/499; display:none; box-shadow:4px 6px 18px rgba(0,0,0,.55); }
+  #owin.open { display:block; animation: winpop .18s ease-out; }
+  #owin img { width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
+  #owin .wclose { left:95.2%; top:0.8%; width:3.6%; height:4.4%; }
   #vwin.open { display:block; animation: winpop .18s ease-out; }
   #vwin img { width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
   #vwin .wclose { left:94.4%; top:1.2%; width:3.4%; height:6.8%; }
@@ -49,11 +53,16 @@
   /* character thought, like on the other pages */
   #thought { position:absolute; left:50%; bottom:3.2%; transform:translateX(-50%); max-width:70%; display:none;
              font-size:calc(var(--sw) * 0.0145); font-style:italic; color:#1b1b1b; background:#fff; padding:.7% 1.3%;
-             border-radius:4px; box-shadow:0 2px 10px rgba(0,0,0,.5); text-align:center; z-index:5; pointer-events:none; }
+             border-radius:4px; box-shadow:0 2px 10px rgba(0,0,0,.5); text-align:center; z-index:50; pointer-events:none; }
   /* article viewer */
   #viewer { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.82); z-index:20; }
   #viewer.open { display:flex; }
-  #viewer img { max-width:92vw; max-height:88vh; box-shadow:0 8px 30px rgba(0,0,0,.7); }
+  #vbox { position:relative; line-height:0; }
+  #viewer img { max-width:92vw; max-height:84vh; box-shadow:0 8px 30px rgba(0,0,0,.7); display:block; }
+  #vsym { position:absolute; left:79%; top:29%; width:13%; height:26%; display:none; border-radius:6px; }
+  #vcap { position:fixed; left:50%; bottom:46px; transform:translateX(-50%); max-width:80vw; display:none; z-index:22;
+          font: italic 19px Georgia, 'Times New Roman', serif; color:#1b1b1b; background:#fff; padding:9px 16px; border-radius:4px;
+          box-shadow:0 2px 12px rgba(0,0,0,.6); text-align:center; pointer-events:none; line-height:1.35; }
   .nav { position:fixed; top:50%; transform:translateY(-50%); font-size:54px; color:#e8e8e8; padding:10px 18px; user-select:none; z-index:21; display:none; text-shadow:0 2px 8px #000; }
   #viewer.gallery .nav { display:block; }
   #prev { left:8px; } #next { right:8px; }
@@ -74,9 +83,10 @@
   <div id="err"><b>Incorrect password</b>The password you typed is incorrect. Please try again.</div>
   <div id="win"><img src="scans.jpg" alt=""><div id="winclose"></div><div id="file"></div></div>
   <div id="vwin"><img src="volterra.jpg" alt=""><div class="wclose"></div></div>
+  <div id="owin"><img src="outlook.jpg" alt=""><div class="wclose"></div></div>
   <div id="thought"></div>
 </div></div>
-<div id="viewer"><img id="vimg" src="sarah.jpg" alt=""><div id="vclose">✕</div><div class="nav" id="prev">‹</div><div class="nav" id="next">›</div><div id="counter"></div></div>
+<div id="viewer"><div id="vbox"><img id="vimg" src="sarah.jpg" alt=""><div id="vsym"></div></div><div id="vcap"></div><div id="vclose">✕</div><div class="nav" id="prev">‹</div><div class="nav" id="next">›</div><div id="counter"></div></div>
 <div id="mute" title="Ses">🔊</div>
 <script>
 const PASSWORD = 'glacier1986';            // case does not matter: Glacier1986 / GLACIER1986 / glacier1986
@@ -129,6 +139,7 @@ const ICONS = [
   // right side
   { n:'VOLTERRA',           x:79.0, y:13.0, w:6.0, h:7.5, open:'volterra' },
   { n:'SCANS',              x:79.0, y:21.5, w:6.0, h:7.0, open:'scans' },
+  { n:'Outlook Express',    x:78.5, y:30.0, w:8.0, h:7.5, hover:'Bakalım kiminle yazışmış...', open:'outlook' },
   { n:'The Black Mirror I', x:78.0, y:39.5, w:9.5, h:8.0, hover:'Adam amma zevkliymiş! Bu oyun bir efsane' },
 ];
 const icons = document.getElementById('icons');
@@ -141,8 +152,9 @@ for (const it of ICONS) {
   d.addEventListener('mousedown', e => { e.stopPropagation(); clearSel(); d.classList.add('sel'); });
   d.addEventListener('dblclick', () => {
     if (it.dbl) pin(it.dbl, 2600);
-    if (it.open === 'scans') { win.classList.add('open'); clearSel(); }
-    if (it.open === 'volterra') { vwin.classList.add('open'); clearSel(); }
+    if (it.open === 'scans') { front(win); clearSel(); }
+    if (it.open === 'volterra') { front(vwin); clearSel(); }
+    if (it.open === 'outlook') { front(owin); clearSel(); }
   });
   icons.appendChild(d);
 }
@@ -156,29 +168,49 @@ file.addEventListener('mousedown', e => { e.stopPropagation(); file.classList.ad
 file.addEventListener('dblclick', () => openViewer(['sarah.jpg'], 0));
 const vimg = document.getElementById('vimg'), counter = document.getElementById('counter');
 let gal = [], gi = 0;
-function showGal() { vimg.src = gal[gi]; counter.textContent = (gi + 1) + ' / ' + gal.length; }
-function openViewer(list, i) { gal = list; gi = i; showGal(); viewer.classList.toggle('gallery', list.length > 1); viewer.classList.add('open'); }
+const vcap = document.getElementById('vcap'), vsym = document.getElementById('vsym');
+let caps = [], symAt = -1, symHover = false;
+function cap(t) { vcap.textContent = t || ''; vcap.style.display = t ? 'block' : 'none'; }
+function showGal() {
+  vimg.src = gal[gi]; counter.textContent = (gi + 1) + ' / ' + gal.length;
+  vsym.style.display = gi === symAt ? 'block' : 'none'; symHover = false; cap(caps[gi]);
+}
+function openViewer(list, i, captions, symbolIndex) {
+  gal = list; gi = i; caps = captions || []; symAt = symbolIndex === undefined ? -1 : symbolIndex;
+  showGal(); viewer.classList.toggle('gallery', list.length > 1); viewer.classList.add('open');
+}
+vsym.addEventListener('mouseenter', () => { symHover = true; cap('Bu sembolü daha önce görmüştüm!'); });
+vsym.addEventListener('mouseleave', () => { symHover = false; cap(caps[gi]); });
+vsym.addEventListener('click', e => { e.stopPropagation(); });
 function step(d) { if (gal.length < 2) return; gi = (gi + d + gal.length) % gal.length; showGal(); }
 document.getElementById('prev').addEventListener('click', e => { e.stopPropagation(); step(-1); });
 document.getElementById('next').addEventListener('click', e => { e.stopPropagation(); step(1); });
 vimg.addEventListener('click', e => { e.stopPropagation(); step(1); });
-function closeViewer() { viewer.classList.remove('open'); }
+function closeViewer() { viewer.classList.remove('open'); cap(''); }
 document.getElementById('vclose').addEventListener('click', closeViewer);
 viewer.addEventListener('click', e => { if (e.target === viewer) closeViewer(); });
 document.addEventListener('keydown', e => {
   if (viewer.classList.contains('open') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { step(e.key === 'ArrowRight' ? 1 : -1); return; }
   if (e.key !== 'Escape') return;
-  if (viewer.classList.contains('open')) closeViewer(); else { win.classList.remove('open'); vwin.classList.remove('open'); }
+  if (viewer.classList.contains('open')) { closeViewer(); return; }
+  const top = [win, vwin, owin].filter(w => w.classList.contains('open')).sort((a, b) => (+b.style.zIndex || 0) - (+a.style.zIndex || 0))[0];
+  if (top) top.classList.remove('open');
 });
 /* VOLTERRA folder: files 1..5 (her order); double-click opens the photo, arrows/click go to the next one */
-const vwin = document.getElementById('vwin'), VOL = ['v1.jpg','v2.jpg','v3.jpg','v4.jpg','v5.jpg'];
+const vwin = document.getElementById('vwin'), owin = document.getElementById('owin');
+const VOL = ['v1.jpg','v2.jpg','v3.jpg','v4.jpg','v5.jpg'];   // Maria 05.10 14:44: corrected order
+const VOL_CAPS = ['Burası İtalya mı?', 'Burası İtalya mı?', 'Burası İtalya mı?', 'Bu da ne?', 'Bir dakika, bu çok tuhaf...'];
+let zTop = 10; function front(w) { w.classList.add('open'); w.style.zIndex = ++zTop; }
+[win, vwin, owin].forEach(w => w.addEventListener('mousedown', () => { w.style.zIndex = ++zTop; }, true));
+owin.querySelector('.wclose').addEventListener('click', e => { e.stopPropagation(); owin.classList.remove('open'); });
+owin.addEventListener('mousedown', e => e.stopPropagation());
 vwin.querySelector('.wclose').addEventListener('click', e => { e.stopPropagation(); vwin.classList.remove('open'); });
 vwin.addEventListener('mousedown', e => { e.stopPropagation(); if (!e.target.classList.contains('vfile')) vwin.querySelectorAll('.vfile').forEach(f => f.classList.remove('sel')); });
 VOL.forEach((src, i) => {
   const f = document.createElement('div'); f.className = 'vfile'; f.dataset.i = i + 1;
   f.style.left = (35.8 + i * 12.55) + '%';
   f.addEventListener('mousedown', e => { e.stopPropagation(); vwin.querySelectorAll('.vfile').forEach(x => x.classList.remove('sel')); f.classList.add('sel'); });
-  f.addEventListener('dblclick', () => openViewer(VOL, i));
+  f.addEventListener('dblclick', () => openViewer(VOL, i, VOL_CAPS, 4));
   vwin.appendChild(f);
 });
 
