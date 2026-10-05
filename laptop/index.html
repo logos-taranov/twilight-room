@@ -37,7 +37,13 @@
   #win.open { display:block; animation: winpop .18s ease-out; }
   @keyframes winpop { from { transform:scale(.92); opacity:.4 } to { transform:none; opacity:1 } }
   #win img { width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
-  #winclose { position:absolute; left:92.4%; top:2%; width:6%; height:7.6%; }
+  #winclose, .wclose { position:absolute; left:92.4%; top:2%; width:6%; height:7.6%; }
+  #vwin { position:absolute; left:30.2%; top:16.9%; width:44.1%; aspect-ratio:564/458; display:none; box-shadow:4px 6px 18px rgba(0,0,0,.55); }
+  #vwin.open { display:block; animation: winpop .18s ease-out; }
+  #vwin img { width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
+  #vwin .wclose { left:94.4%; top:1.2%; width:3.4%; height:6.8%; }
+  .vfile { position:absolute; top:28.5%; width:9.6%; height:16.5%; border-radius:2px; }
+  .vfile.sel { background:rgba(49,106,197,.30); outline:1px dotted #000; }
   #file { position:absolute; left:38.4%; top:30%; width:12.4%; height:16.4%; border-radius:2px; }
   #file.sel { background:rgba(49,106,197,.30); outline:1px dotted #000; }
   /* character thought, like on the other pages */
@@ -47,7 +53,12 @@
   /* article viewer */
   #viewer { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.82); z-index:20; }
   #viewer.open { display:flex; }
-  #viewer img { max-width:92vw; max-height:92vh; box-shadow:0 8px 30px rgba(0,0,0,.7); }
+  #viewer img { max-width:92vw; max-height:88vh; box-shadow:0 8px 30px rgba(0,0,0,.7); }
+  .nav { position:fixed; top:50%; transform:translateY(-50%); font-size:54px; color:#e8e8e8; padding:10px 18px; user-select:none; z-index:21; display:none; text-shadow:0 2px 8px #000; }
+  #viewer.gallery .nav { display:block; }
+  #prev { left:8px; } #next { right:8px; }
+  #counter { position:fixed; bottom:14px; left:50%; transform:translateX(-50%); color:#ddd; font-size:15px; display:none; z-index:21; }
+  #viewer.gallery #counter { display:block; }
   #vclose { position:fixed; top:12px; right:20px; font-size:36px; color:#e8e8e8; user-select:none; z-index:21; }
   #mute { position:fixed; left:16px; bottom:14px; z-index:30; font-size:22px; opacity:.7; user-select:none; cursor:pointer; }
 </style>
@@ -62,9 +73,10 @@
   <div id="go"></div>
   <div id="err"><b>Incorrect password</b>The password you typed is incorrect. Please try again.</div>
   <div id="win"><img src="scans.jpg" alt=""><div id="winclose"></div><div id="file"></div></div>
+  <div id="vwin"><img src="volterra.jpg" alt=""><div class="wclose"></div></div>
   <div id="thought"></div>
 </div></div>
-<div id="viewer"><img src="sarah.jpg" alt=""><div id="vclose">✕</div></div>
+<div id="viewer"><img id="vimg" src="sarah.jpg" alt=""><div id="vclose">✕</div><div class="nav" id="prev">‹</div><div class="nav" id="next">›</div><div id="counter"></div></div>
 <div id="mute" title="Ses">🔊</div>
 <script>
 const PASSWORD = 'glacier1986';            // case does not matter: Glacier1986 / GLACIER1986 / glacier1986
@@ -72,13 +84,14 @@ const scene = document.getElementById('scene'), pw = document.getElementById('pw
 const thought = document.getElementById('thought'), win = document.getElementById('win'), viewer = document.getElementById('viewer');
 
 /* ---------- police-station ambience (her video), starts on the first key/click ---------- */
+const AMB_VOL = .275;   // Maria 05.10: 2x quieter than .55
 const amb = new Audio('police.mp3'); amb.loop = true; amb.volume = 0; let muted = false, started = false;
 function startAmb() {
   if (started) return; started = true;
-  amb.play().then(() => { let v = 0; const t = setInterval(() => { v = Math.min(.55, v + .05); amb.volume = muted ? 0 : v; if (v >= .55) clearInterval(t); }, 120); }).catch(() => { started = false; });
+  amb.play().then(() => { let v = 0; const t = setInterval(() => { v = Math.min(AMB_VOL, v + .03); amb.volume = muted ? 0 : v; if (v >= AMB_VOL) clearInterval(t); }, 120); }).catch(() => { started = false; });
 }
 ['keydown', 'mousedown'].forEach(ev => document.addEventListener(ev, startAmb, true));
-document.getElementById('mute').addEventListener('click', function () { muted = !muted; amb.volume = muted ? 0 : .55; this.textContent = muted ? '🔇' : '🔊'; });
+document.getElementById('mute').addEventListener('click', function () { muted = !muted; amb.volume = muted ? 0 : AMB_VOL; this.textContent = muted ? '🔇' : '🔊'; });
 
 /* ---------- login ---------- */
 function tryUnlock() {
@@ -114,6 +127,7 @@ const ICONS = [
   { n:'QuickTime Player',   x:24.5, y:53.5, w:5.5, h:9.5, hover:LEFT_HOVER, dbl:LEFT_DBL },
   { n:'Spider Solitaire',   x:16.5, y:64.0, w:7.0, h:8.0, hover:LEFT_HOVER, dbl:LEFT_DBL },
   // right side
+  { n:'VOLTERRA',           x:79.0, y:13.0, w:6.0, h:7.5, open:'volterra' },
   { n:'SCANS',              x:79.0, y:21.5, w:6.0, h:7.0, open:'scans' },
   { n:'The Black Mirror I', x:78.0, y:39.5, w:9.5, h:8.0, hover:'Adam amma zevkliymiş! Bu oyun bir efsane' },
 ];
@@ -128,6 +142,7 @@ for (const it of ICONS) {
   d.addEventListener('dblclick', () => {
     if (it.dbl) pin(it.dbl, 2600);
     if (it.open === 'scans') { win.classList.add('open'); clearSel(); }
+    if (it.open === 'volterra') { vwin.classList.add('open'); clearSel(); }
   });
   icons.appendChild(d);
 }
@@ -138,13 +153,33 @@ const file = document.getElementById('file');
 document.getElementById('winclose').addEventListener('click', e => { e.stopPropagation(); win.classList.remove('open'); });
 win.addEventListener('mousedown', e => { e.stopPropagation(); if (e.target !== file) file.classList.remove('sel'); });
 file.addEventListener('mousedown', e => { e.stopPropagation(); file.classList.add('sel'); });
-file.addEventListener('dblclick', () => viewer.classList.add('open'));
+file.addEventListener('dblclick', () => openViewer(['sarah.jpg'], 0));
+const vimg = document.getElementById('vimg'), counter = document.getElementById('counter');
+let gal = [], gi = 0;
+function showGal() { vimg.src = gal[gi]; counter.textContent = (gi + 1) + ' / ' + gal.length; }
+function openViewer(list, i) { gal = list; gi = i; showGal(); viewer.classList.toggle('gallery', list.length > 1); viewer.classList.add('open'); }
+function step(d) { if (gal.length < 2) return; gi = (gi + d + gal.length) % gal.length; showGal(); }
+document.getElementById('prev').addEventListener('click', e => { e.stopPropagation(); step(-1); });
+document.getElementById('next').addEventListener('click', e => { e.stopPropagation(); step(1); });
+vimg.addEventListener('click', e => { e.stopPropagation(); step(1); });
 function closeViewer() { viewer.classList.remove('open'); }
 document.getElementById('vclose').addEventListener('click', closeViewer);
 viewer.addEventListener('click', e => { if (e.target === viewer) closeViewer(); });
 document.addEventListener('keydown', e => {
+  if (viewer.classList.contains('open') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { step(e.key === 'ArrowRight' ? 1 : -1); return; }
   if (e.key !== 'Escape') return;
-  if (viewer.classList.contains('open')) closeViewer(); else win.classList.remove('open');
+  if (viewer.classList.contains('open')) closeViewer(); else { win.classList.remove('open'); vwin.classList.remove('open'); }
+});
+/* VOLTERRA folder: files 1..5 (her order); double-click opens the photo, arrows/click go to the next one */
+const vwin = document.getElementById('vwin'), VOL = ['v1.jpg','v2.jpg','v3.jpg','v4.jpg','v5.jpg'];
+vwin.querySelector('.wclose').addEventListener('click', e => { e.stopPropagation(); vwin.classList.remove('open'); });
+vwin.addEventListener('mousedown', e => { e.stopPropagation(); if (!e.target.classList.contains('vfile')) vwin.querySelectorAll('.vfile').forEach(f => f.classList.remove('sel')); });
+VOL.forEach((src, i) => {
+  const f = document.createElement('div'); f.className = 'vfile'; f.dataset.i = i + 1;
+  f.style.left = (35.8 + i * 12.55) + '%';
+  f.addEventListener('mousedown', e => { e.stopPropagation(); vwin.querySelectorAll('.vfile').forEach(x => x.classList.remove('sel')); f.classList.add('sel'); });
+  f.addEventListener('dblclick', () => openViewer(VOL, i));
+  vwin.appendChild(f);
 });
 
 window.addEventListener('load', () => pw.focus());
