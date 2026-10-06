@@ -23,8 +23,8 @@
     box-shadow:0 8px 28px rgba(0,0,0,.6); pointer-events:none; opacity:0; transition:opacity 1s; }
   #note.on { opacity:1; }
   #inv { position:fixed; top:0; right:0; bottom:0; width:var(--invw); z-index:6; display:flex; flex-direction:column; justify-content:center;
-    gap:12px; padding:12px; background:linear-gradient(90deg,rgba(10,16,15,.0),rgba(10,16,15,.85) 30%); border-left:1px solid rgba(160,190,180,.18); }
-  #inv .slot { width:100%; aspect-ratio:3/2; border:1px dashed rgba(170,200,190,.28); border-radius:6px; display:flex; align-items:center;
+    gap:8px; padding:10px 12px; background:linear-gradient(90deg,rgba(10,16,15,.0),rgba(10,16,15,.85) 30%); border-left:1px solid rgba(160,190,180,.18); }
+  #inv .slot { width:auto; height:min(calc((100vh - 20px - 48px) / 7), calc((var(--invw) - 24px) * 2 / 3)); align-self:center; aspect-ratio:3/2; border:1px dashed rgba(170,200,190,.28); border-radius:6px; display:flex; align-items:center;
     justify-content:center; overflow:hidden; background:rgba(255,255,255,.03); }
   #inv .slot img { width:100%; height:100%; object-fit:cover; cursor:zoom-in; animation:pop .5s ease; }
   @keyframes pop { from { transform:scale(.4); opacity:0 } to { transform:scale(1); opacity:1 } }
@@ -67,10 +67,12 @@ const SCENE = {
   final:"Sanırım bu kadar.",
   ambience:"ambient.mp3", ambienceVolume:.7,
   hotspots:[
-    { id:"camera",  x:44, y:44.5, w:16, h:14, close:"camera_close.jpg",  caption:"Kamera ve objektif kırık, hafıza kartını göremiyorum.", photo:"photo_camera.jpg", invText:"Fotoğraf makinesi paramparça… Hafıza kartı da kayıp." },
+    { id:"camera",  x:45.5, y:46, w:14.5, h:12.5, close:"camera_close.jpg",  caption:"Kamera ve objektif kırık, hafıza kartını göremiyorum.", photo:"photo_camera.jpg", invText:"Fotoğraf makinesi paramparça… Hafıza kartı da kayıp." },
     { id:"pendant", x:8,  y:63,   w:9,  h:14, close:"pendant_close.jpg", caption:"Bu da ne böyle?", photo:"photo_pendant.jpg", invText:"Bunun ne olduğu hakkında hiçbir fikrim yok." },
     { id:"blood",   x:63, y:46.5, w:18, h:12, close:"blood_close.jpg",   caption:"Bu David'in kanı mı yoksa?", photo:"photo_blood.jpg", invText:"Kan lekeleri. Burada ne oldu?" },
     { id:"cliff",   x:74, y:27,   w:22, h:19, close:"cliff_close.jpg",   caption:"Yükseklik korkum var. En iyisi kenardan uzak durmak.", photo:"photo_cliff.jpg", invText:"David gerçekten buradan aşağı mı atladı?" },
+    { id:"tree",    x:1,  y:3,    w:12, h:38,   close:"tree_close.jpg", caption:"", text:"Bu ağaçlara ne olmuş böyle?", photo:"photo_tree.jpg", invText:"Bu ağaçların gövdeleri zarar görmüş." },
+    { id:"bag",     x:34, y:36.5, w:11.5, h:10, close:"bag_close.jpg", caption:"Sahibi nerede acaba?", text:"David'in sırt çantası burada.", photo:"photo_bag.jpg", invText:"David'in çantası burada kalmış." },
     { id:"sunset",  x:83, y:8,    w:17, h:18, close:null, caption:"", text:"Ne kadar güzel bir manzara", photo:"photo_sunset.jpg", invText:"Böyle bir manzarayı çekmeden geçemezdim. Her fotoğrafın delil olması gerekmiyor." }
   ]
 };
@@ -100,7 +102,7 @@ function shutter(){ if(muted) return; const t=audio().currentTime; burst(t,.035,
 const hovered=new Set(), inspected=new Set(), shot=[];
 const needInspect=SCENE.hotspots.filter(h=>h.close).map(h=>h.id);
 function progress(){
-  const done = SCENE.hotspots.every(h=>hovered.has(h.id)) && needInspect.every(id=>inspected.has(id)) && shot.length===SCENE.hotspots.length;
+  const done = shot.length===SCENE.hotspots.length;   /* Мария 06.10: финал, когда собраны все карточки */
   const n=document.getElementById('note'); n.textContent = done ? SCENE.final : SCENE.hint; return done;
 }
 
