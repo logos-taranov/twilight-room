@@ -115,13 +115,19 @@
   <div id="flash"></div>
 </div></div>
 <div id="tray"></div>
-<div id="zoom"><img alt=""><div class="bignote"></div></div>
+<div id="zoom"><img alt=""><div class="bignote"></div><div class="zcap"></div></div>
 <div id="paper"><div id="sheet"><ol></ol><div id="back">← Panoya dön</div></div></div>
 <div id="mute" title="Ses">🔊</div>
 <div id="gate"><h1>David Reed nerede?</h1><p>Girmek için tıklayın 🔊</p></div>
 <style>
   #zoom { position:fixed; inset:0; z-index:150; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); cursor:zoom-out; }
-  #zoom.on { display:flex; }
+  #zoom.on { display:flex; flex-direction:column; gap:14px; }
+  /* Maria 08.10: the item's comment stays visible under the enlarged image */
+  #zoom .zcap { display:none; max-width:min(70vw, 760px); font: italic clamp(15px, 1.5vw, 21px) Georgia, "Times New Roman", serif; color:#1b1b1b;
+                background:#fff; padding:8px 16px; border-radius:4px; box-shadow:0 2px 10px rgba(0,0,0,.55); text-align:center; animation: zin .18s ease-out; }
+  #zoom.cap .zcap { display:block; }
+  #zoom.cap.doc img { max-height:80vh; }
+  #zoom.cap img { max-height:52vh; }
   #zoom img { max-width:min(46vw, 620px); max-height:58vh; filter: drop-shadow(4px 8px 16px rgba(0,0,0,.7)); animation: zin .18s ease-out; }
   #zoom.doc img { max-width:min(74vw, 1100px); max-height:88vh; }
   #zoom .bignote { display:none; max-width:min(44vw, 520px); padding:26px 30px; background:#f6e27c; color:#2a2414; font-family:'Caveat', 'Segoe Print', cursive;
@@ -156,7 +162,7 @@ const S1_PHOTO = { top:52.5, w:11, h:11 }, S1_NOTE = { top:65, w:17, h:13 };
 
 /* ---------------- stage 2 ---------------- */
 const S2_EVIDENCE = [
-  { id:'pendant', g:1, src:'s2_pendant.png', hover:"Uçurumun yanında bulduğumuz kolye" },
+  { id:'pendant', g:1, src:'s2_pendant.png?v=2', hover:"Uçurumun yanında bulduğumuz kolye" },
   { id:'city',    g:1, src:'s2_city.jpg',    hover:"Volterra, İtalya'da bir kasaba" },
   { id:'door',    g:1, src:'s2_door.jpg',    hover:"Volterra'da bir binanın kapısında bulunan gizemli sembol" },
   { id:'bald',    g:2, src:'s2_bald.png',    hover:"Nathan Whitmore, kanser hastası ünlü eksantrik milyarder" },
@@ -285,6 +291,9 @@ function link(a, b) { links.push({ a, b }); drawThreads(); }
 /* ---------- zoom ---------- */
 function openZoom(el) {
   zoom.className = 'on';
+  const cap = el.dataset && el.dataset.hover;
+  zoom.querySelector('.zcap').textContent = cap || '';
+  if (cap) zoom.classList.add('cap');
   if (el.classList && el.classList.contains('nt')) {
     zoom.classList.add('note'); znote.textContent = el.textContent; znote.classList.toggle('hyp', el.classList.contains('hyp'));
   } else {
