@@ -77,10 +77,10 @@
 </head>
 <body>
 <div id="stage"><div id="scene">
-  <img class="bg" src="board.jpg" alt="">
+  <img class="bg" src="board.jpg?v=2" alt="">
   <svg id="threads" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
-  <div class="fixed" id="david"><img src="david.jpg" alt="David Reed"></div>
-  <div class="fixed" id="nreed"><img src="note.png" alt="DAVİD REED NEREDE?"></div>
+  <div class="fixed" id="david"><img src="david.jpg?v=2" alt="David Reed"></div>
+  <div class="fixed" id="nreed"><img src="note.png?v=2" alt="DAVİD REED NEREDE?"></div>
   <div id="thought"></div>
 </div></div>
 <div id="tray"></div>
@@ -93,9 +93,9 @@
    places are filled; the right ones stay. Click a photo = moderate zoom, drag = move. */
 const ORDER_MATTERS = true;            // photos left -> right: 1 motel, 2 room, 3 cliff
 const PHOTOS = [
-  { id:'motel', src:'motel.jpg' },
-  { id:'room',  src:'room.png' },
-  { id:'cliff', src:'cliff.png' },
+  { id:'motel', src:'motel.jpg?v=2' },
+  { id:'room',  src:'room.png?v=2' },
+  { id:'cliff', src:'cliff.png?v=2' },
 ];
 const NOTES = [
   { id:'motel', text:"David'in son kaldığı yer. Bu Pazartesi saat 08.17'de ayrıldı." },
@@ -145,7 +145,7 @@ function goHome(el) { el.home.appendChild(el); }
 function openZoom(src) { zimg.src = src; zoom.classList.add('on'); }
 zoom.addEventListener('click', () => zoom.classList.remove('on'));
 addEventListener('keydown', e => { if (e.key === 'Escape') zoom.classList.remove('on'); });
-document.getElementById('david').addEventListener('click', () => openZoom('david.jpg'));
+document.getElementById('david').addEventListener('click', () => openZoom('david.jpg?v=2'));
 
 /* drag & drop; a press without movement on a photo = zoom */
 let press = null, drag = null;
