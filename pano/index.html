@@ -13,46 +13,48 @@
   #scene { --sw: min(calc(100vw - var(--trayw)), calc(100vh * 1280 / 853)); position:relative; width:var(--sw); aspect-ratio:1280/853; }
   #scene > img.bg { position:absolute; inset:0; width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
 
-  /* centre of the board (Maria 08.10: smaller, leave room for the next stages) */
+  /* centre of the board: David + the note (compact, room around for all stages) */
   .fixed { position:absolute; user-select:none; -webkit-user-drag:none; filter: drop-shadow(2px 5px 7px rgba(0,0,0,.6)); }
   .fixed img { width:100%; display:block; -webkit-user-drag:none; }
-  #david { left:41.2%; top:29%; width:8.4%; transform:rotate(-2deg); cursor:zoom-in; }
-  #nreed { left:50.6%; top:31.5%; width:9.6%; transform:rotate(-5deg); pointer-events:none; }
+  #david { left:36%; top:33.5%; width:7%; transform:rotate(-2deg); cursor:zoom-in; z-index:3; }
+  #nreed { left:43.5%; top:35.5%; width:8%; transform:rotate(-5deg); pointer-events:none; z-index:3; }
 
-  /* drop places for stage 1 (lower part of the board, compact) */
-  .slot { position:absolute; border:2px dashed rgba(255,240,215,.26); border-radius:3px; box-sizing:border-box; transition:background .15s, border-color .15s; }
-  .slot.photo { top:52%; width:9.6%; height:10.8%; }
-  .slot.note  { top:63.6%; width:12%; height:10.6%; background:rgba(246,226,124,.05); }
-  .slot.hot   { border-color:rgba(255,236,170,.85); background:rgba(255,236,170,.14); }
+  /* drop places */
+  .slot { position:absolute; border:2px dashed rgba(255,240,215,.26); border-radius:3px; box-sizing:border-box; transition:background .15s, border-color .15s, opacity .6s; z-index:4; }
+  .slot.note, .slot.hyp { background:rgba(246,226,124,.05); }
+  .slot.hot { border-color:rgba(255,236,170,.85); background:rgba(255,236,170,.14); }
   .slot.filled { border-color:transparent; background:none; }
+  .slot.s2 { display:none; opacity:0; }
+  #scene.s2on .slot.s2 { display:block; }
+  #scene.s2show .slot.s2 { opacity:1; }
 
   /* evidence tray (separate compartment) */
-  #tray { position:fixed; top:0; right:0; bottom:0; width:var(--trayw); box-sizing:border-box; padding:14px 12px; z-index:5;
+  #tray { --rows:3; position:fixed; top:0; right:0; bottom:0; width:var(--trayw); box-sizing:border-box; padding:14px 12px; z-index:5; overflow-y:auto;
           background: linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,0) 14px), repeating-linear-gradient(92deg, #3b2717 0 7px, #432c1a 7px 15px, #362314 15px 22px);
-          box-shadow: inset 0 0 40px rgba(0,0,0,.75); display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3, 1fr); gap:12px; }
-  .cell { position:relative; display:flex; align-items:center; justify-content:center; min-height:0; }
+          box-shadow: inset 0 0 40px rgba(0,0,0,.75); display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(var(--rows), 1fr); gap:12px; }
+  .cell { position:relative; display:flex; align-items:center; justify-content:center; min-height:0; overflow:visible; }
 
   /* evidence pieces */
   .item { position:relative; cursor:grab; touch-action:none; user-select:none; -webkit-user-drag:none; box-sizing:border-box; }
+  .item[data-locked] { cursor:zoom-in; }
   .cell > .item { width:100%; }
   .slot > .item { width:100%; height:100%; }
   .item.ph img { width:100%; height:100%; object-fit:contain; display:block; pointer-events:none; filter: drop-shadow(2px 4px 6px rgba(0,0,0,.65)); }
-  .cell > .item.ph img { height:auto; max-height:28vh; }
+  .cell > .item.ph img { height:auto; max-height:calc((100vh - 28px - (var(--rows) - 1) * 12px) / var(--rows) - 6px); }
   .item.nt { background:#f6e27c; color:#2a2414; font-family:'Caveat', 'Segoe Print', 'Comic Sans MS', cursive; font-weight:700; line-height:1.1;
              padding:6% 7%; box-shadow:2px 4px 8px rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; text-align:center;
              transform:rotate(-1.5deg); overflow:hidden; }
-  .cell > .item.nt { font-size:calc(var(--trayw) * 0.043); min-height:9vh; }
+  .item.nt.hyp { background:#9fd9f2; color:#14232a; transform:rotate(1.2deg); }
   .item.dragging { position:fixed !important; z-index:100; cursor:grabbing; pointer-events:none; transform:rotate(-3deg) scale(1.03); }
   .slot > .item::before, #david::before, #nreed::before { content:""; position:absolute; left:50%; top:-2%; width:calc(var(--sw) * 0.0095); height:calc(var(--sw) * 0.0095);
      transform:translate(-50%, -30%); border-radius:50%; background: radial-gradient(circle at 35% 35%, #ff8a8a, #b5121b 60%, #5a0408); box-shadow:1px 2px 3px rgba(0,0,0,.6); z-index:3; }
   .shake { animation: shake .45s; }
   @keyframes shake { 0%,100%{translate:0} 20%{translate:-6px} 40%{translate:6px} 60%{translate:-4px} 80%{translate:4px} }
-  .locked .slot .item { cursor:zoom-in; }
 
-  /* red threads after the stage is solved */
+  /* red threads */
   #threads { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2; }
-  #threads line { stroke:#b3121c; stroke-width:.3; stroke-linecap:round; stroke-dasharray:60; stroke-dashoffset:60; transition: stroke-dashoffset 1.4s ease; }
-  #scene.solved #threads line { stroke-dashoffset:0; }
+  #threads line { stroke:#b3121c; stroke-width:.3; stroke-linecap:round; stroke-dasharray:80; stroke-dashoffset:80; transition: stroke-dashoffset 1.4s ease; }
+  #threads line.on { stroke-dashoffset:0; }
 
   /* heroine's comment, like on the other pages */
   #thought { position:absolute; left:50%; bottom:4%; transform:translateX(-50%); max-width:74%; display:none; z-index:8;
@@ -61,11 +63,17 @@
   #thought.on { display:block; animation: fade 1s ease; }
   @keyframes fade { from { opacity:0 } to { opacity:1 } }
 
-  /* moderate zoom (Maria 08.10: bigger, but not full screen) */
+  /* zoom: photos moderately (not full screen), documents and notes big enough to read */
   #zoom { position:fixed; inset:0; z-index:150; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); cursor:zoom-out; }
   #zoom.on { display:flex; }
   #zoom img { max-width:min(46vw, 620px); max-height:58vh; filter: drop-shadow(4px 8px 16px rgba(0,0,0,.7)); animation: zin .18s ease-out; }
-  @keyframes zin { from { transform:scale(.85); opacity:.4 } to { transform:none; opacity:1 } }
+  #zoom.doc img { max-width:min(74vw, 1100px); max-height:88vh; }
+  #zoom .bignote { display:none; max-width:min(44vw, 520px); padding:26px 30px; background:#f6e27c; color:#2a2414; font-family:'Caveat', 'Segoe Print', cursive;
+                   font-weight:700; font-size:clamp(20px, 2.2vw, 30px); line-height:1.2; text-align:center; box-shadow:4px 8px 18px rgba(0,0,0,.6); transform:rotate(-1.5deg); animation: zin .18s ease-out; }
+  #zoom .bignote.hyp { background:#9fd9f2; color:#14232a; transform:rotate(1.2deg); }
+  #zoom.note img { display:none; }
+  #zoom.note .bignote { display:block; }
+  @keyframes zin { from { transform:scale(.85); opacity:.4 } to { opacity:1 } }
 
   #gate { position:fixed; inset:0; z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center;
     background: radial-gradient(ellipse at center, rgba(32,24,18,.93), rgba(6,5,4,.98)); cursor:pointer; text-align:center; padding:20px; }
@@ -84,90 +92,153 @@
   <div id="thought"></div>
 </div></div>
 <div id="tray"></div>
-<div id="zoom"><img alt=""></div>
+<div id="zoom"><img alt=""><div class="bignote"></div></div>
 <div id="mute" title="Ses">🔊</div>
 <div id="gate"><h1>David Reed nerede?</h1><p>Girmek için tıklayın 🔊</p></div>
 <script>
-/* Page 5, stage 1 (Maria 08.10): 3 photos on the lower part of the board, left -> right in story
-   order, and the matching sticky note under each. Wrong pieces go back to the tray once all six
-   places are filled; the right ones stay. Click a photo = moderate zoom, drag = move. */
-const ORDER_MATTERS = true;            // photos left -> right: 1 motel, 2 room, 3 cliff
-const PHOTOS = [
+/* Page 5 (Maria 08.10).
+   Stage 1: 3 photos on the lower part of the board, left -> right in story order, the matching
+   sticky note under each. Stage 2 (hypotheses): group the evidence into three zones and put the
+   right hypothesis (blue note) on each zone. Wrong pieces go back to the tray once a stage's places
+   are all filled; correct ones stay. Click = zoom, drag = move. ?stage=2 opens stage 2 directly. */
+
+/* ---------------- stage 1 ---------------- */
+const S1_PHOTOS = [
   { id:'motel', src:'motel.jpg?v=2' },
   { id:'room',  src:'room.png?v=2' },
   { id:'cliff', src:'cliff.png?v=2' },
 ];
-const NOTES = [
+const S1_NOTES = [
   { id:'motel', text:"David'in son kaldığı yer. Bu Pazartesi saat 08.17'de ayrıldı." },
   { id:'room',  text:"David'in kıyafetleri ve kişisel eşyaları odada kaldı. Görünüşe göre otelden tamamen ayrılmayı planlamıyordu." },
   { id:'cliff', text:"David'in eşyaları, kan izleri ve boğuşma belirtileri burada bulundu." },
 ];
-const STAGE1_DONE = "David'in izini uçurumda kaybettik. Ancak cesedi bulunamadı.";
-const COLS = [36, 49.5, 63];           // column centres, % of the scene
-const PH_W = 9.6, NT_W = 12;
+const S1_DONE = "David'in izini uçurumda kaybettik. Ancak cesedi bulunamadı.";
+const S1_COLS = [31.5, 42.5, 53.5];
+const S1_PHOTO = { top:50.5, w:7.5, h:8.8 }, S1_NOTE = { top:60.3, w:10.5, h:10.5 };
 
-const scene = document.getElementById('scene'), tray = document.getElementById('tray');
-const zoom = document.getElementById('zoom'), zimg = zoom.querySelector('img'), thought = document.getElementById('thought');
-let muted = false, locked = false;
+/* ---------------- stage 2 ---------------- */
+const S2_EVIDENCE = [
+  { id:'pendant', g:1, src:'s2_pendant.png' },
+  { id:'man',     g:1, src:'s2_man.jpg' },
+  { id:'door',    g:1, src:'s2_door.jpg' },
+  { id:'bald',    g:2, src:'s2_bald.png' },
+  { id:'letter',  g:2, src:'s2_letter.jpg', doc:true },
+  { id:'news',    g:3, src:'s2_news.jpg', doc:true },
+  { id:'sarah',   g:3, src:'s2_sarah.jpg' },
+];
+const S2_HYP = [
+  { g:1, text:"İtalya'da gizli bir örgüt mü faaliyet gösteriyor? David ve Nathan'ı onlar mı ortadan kaldırdı?" },
+  { g:2, text:"Nathan, David'in araştırmalarını finanse ediyordu. Ölümcül hastalığı yüzünden ölümsüzlüğün peşine düşmüş olabilir mi?" },
+  { g:3, text:"Sarah da yıllar önce ormanda esrarengiz bir şekilde kaybolmuştu. İki olay arasında bir bağlantı olabilir mi?" },
+];
+const S2_DONE = null;                 // heroine's line after stage 2: waiting for Maria's text
+const EV = { w:6.8, h:8.6 };
+const S2_ZONES = [                    // item centres (x), item top, hypothesis box; % of the scene
+  { id:'A', xs:[30, 38.5, 47], top:12.5, hyp:{ left:53,   top:12, w:19,   h:11 },   thread:[39.5, 33.5, 38.5, 21.1] },
+  { id:'B', xs:[15.5, 23.5],   top:32,   hyp:{ left:11.8, top:42, w:15.4, h:11.5 }, thread:[36, 40, 27.2, 47] },
+  { id:'C', xs:[62, 70],       top:32,   hyp:{ left:58.4, top:42, w:15.2, h:11.5 }, thread:[51.5, 40, 58.4, 47] },
+];
+
+const scene = document.getElementById('scene'), tray = document.getElementById('tray'), threads = document.getElementById('threads');
+const zoom = document.getElementById('zoom'), zimg = zoom.querySelector('img'), znote = zoom.querySelector('.bignote'), thought = document.getElementById('thought');
+let muted = false, stage = 1;
 function play(name) { if (muted) return; try { new Audio(name).play().catch(() => {}); } catch (e) {} }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-/* places on the board */
+/* ---------- board places ---------- */
 const slots = [];
-COLS.forEach((c, i) => {
-  [['photo', PH_W], ['note', NT_W]].forEach(([kind, w]) => {
-    const s = document.createElement('div'); s.className = 'slot ' + kind; s.dataset.kind = kind; s.dataset.i = i;
-    s.style.left = (c - w / 2) + '%'; scene.appendChild(s); slots.push(s);
-  });
+function addSlot(kind, rect, extra) {
+  const s = document.createElement('div'); s.className = 'slot ' + kind + (extra && extra.cls ? ' ' + extra.cls : ''); s.dataset.kind = kind;
+  Object.entries(extra || {}).forEach(([k, v]) => { if (k !== 'cls') s.dataset[k] = v; });
+  Object.assign(s.style, { left: rect.left + '%', top: rect.top + '%', width: rect.w + '%', height: rect.h + '%' });
+  scene.appendChild(s); slots.push(s); return s;
+}
+S1_COLS.forEach((c, i) => {
+  addSlot('photo', { left: c - S1_PHOTO.w / 2, top: S1_PHOTO.top, w: S1_PHOTO.w, h: S1_PHOTO.h }, { i });
+  addSlot('note',  { left: c - S1_NOTE.w / 2,  top: S1_NOTE.top,  w: S1_NOTE.w,  h: S1_NOTE.h },  { i });
+});
+S2_ZONES.forEach(z => {
+  z.xs.forEach(x => addSlot('ev', { left: x - EV.w / 2, top: z.top, w: EV.w, h: EV.h }, { zone: z.id, cls: 's2' }));
+  addSlot('hyp', z.hyp, { zone: z.id, cls: 's2' });
 });
 const slotAt = (kind, i) => slots.find(s => s.dataset.kind === kind && +s.dataset.i === i);
+const zoneSlots = (id, kind) => slots.filter(s => s.dataset.zone === id && s.dataset.kind === kind);
 
-/* tray: photos and notes shuffled */
-function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+/* ---------- pieces ---------- */
 const items = [];
-PHOTOS.forEach(p => { const el = document.createElement('div'); el.className = 'item ph'; el.dataset.kind = 'photo'; el.dataset.id = p.id;
-  el.innerHTML = `<img src="${p.src}" alt="">`; items.push(el); });
-NOTES.forEach(n => { const el = document.createElement('div'); el.className = 'item nt'; el.dataset.kind = 'note'; el.dataset.id = n.id;
-  el.textContent = n.text; items.push(el); });
-shuffle(items.slice()).forEach(el => { const c = document.createElement('div'); c.className = 'cell'; tray.appendChild(c); c.appendChild(el); el.home = c; });
+function makePhoto(kind, id, src, data) {
+  const el = document.createElement('div'); el.className = 'item ph'; el.dataset.kind = kind; el.dataset.id = id;
+  Object.assign(el.dataset, data || {}); el.innerHTML = `<img src="${src}" alt="">`; items.push(el); return el;
+}
+function makeNote(kind, id, text, data, cls) {
+  const el = document.createElement('div'); el.className = 'item nt' + (cls ? ' ' + cls : ''); el.dataset.kind = kind; el.dataset.id = id;
+  Object.assign(el.dataset, data || {}); el.textContent = text; items.push(el); return el;
+}
+function fillTray(pieces, rows) {
+  tray.innerHTML = ''; tray.style.setProperty('--rows', rows);
+  shuffle(pieces.slice()).forEach(el => { const c = document.createElement('div'); c.className = 'cell'; tray.appendChild(c); c.appendChild(el); el.home = c; });
+  refresh();
+}
+fillTray([
+  ...S1_PHOTOS.map(p => makePhoto('photo', p.id, p.src)),
+  ...S1_NOTES.map(n => makeNote('note', n.id, n.text)),
+], 3);
 
-/* sticky-note text always fits its place on the board */
+/* sticky-note text always fits (board place or tray cell) */
 function fit(el) {
-  if (!el.classList.contains('nt')) return;
-  if (!el.parentElement.classList.contains('slot')) { el.style.fontSize = ''; return; }
-  const sw = scene.getBoundingClientRect().width; let fs = sw * 0.0118; el.style.fontSize = fs + 'px';
-  while (fs > 6 && el.scrollHeight > el.clientHeight + 1) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+  if (!el.classList.contains('nt') || !el.parentElement) return;
+  const p = el.parentElement;
+  if (p.classList.contains('slot')) {
+    let fs = scene.getBoundingClientRect().width * 0.0118; el.style.fontSize = fs + 'px';
+    while (fs > 5 && el.scrollHeight > el.clientHeight + 1) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+  } else if (p.classList.contains('cell')) {
+    let fs = tray.getBoundingClientRect().width * 0.042; el.style.fontSize = fs + 'px';
+    while (fs > 7 && el.offsetHeight > p.clientHeight - 2) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+  }
 }
 function refresh() { slots.forEach(s => s.classList.toggle('filled', !!s.querySelector('.item'))); items.forEach(fit); }
 addEventListener('resize', refresh);
 function goHome(el) { el.home.appendChild(el); }
 
-/* zoom */
-function openZoom(src) { zimg.src = src; zoom.classList.add('on'); }
-zoom.addEventListener('click', () => zoom.classList.remove('on'));
-addEventListener('keydown', e => { if (e.key === 'Escape') zoom.classList.remove('on'); });
-document.getElementById('david').addEventListener('click', () => openZoom('david.jpg?v=2'));
+/* ---------- zoom ---------- */
+function openZoom(el) {
+  zoom.className = 'on';
+  if (el.classList && el.classList.contains('nt')) {
+    zoom.classList.add('note'); znote.textContent = el.textContent; znote.classList.toggle('hyp', el.classList.contains('hyp'));
+  } else {
+    const src = el.querySelector('img').getAttribute('src');
+    if (el.dataset && el.dataset.doc) zoom.classList.add('doc');
+    zimg.src = src;
+  }
+}
+zoom.addEventListener('click', () => { zoom.className = ''; });
+addEventListener('keydown', e => { if (e.key === 'Escape') zoom.className = ''; });
+document.getElementById('david').addEventListener('click', () => openZoom(document.getElementById('david')));
 
-/* drag & drop; a press without movement on a photo = zoom */
+/* ---------- drag & drop (a press without movement = zoom) ---------- */
 let press = null, drag = null;
-items.forEach(el => el.addEventListener('pointerdown', e => {
-  if (e.button > 0) return;
-  e.preventDefault();
-  press = { el, x: e.clientX, y: e.clientY };
-}));
-function startDrag(e) {
+scene.addEventListener('pointerdown', onDown); tray.addEventListener('pointerdown', onDown);
+function onDown(e) {
+  const el = e.target.closest && e.target.closest('.item');
+  if (!el || e.button > 0) return;
+  e.preventDefault(); press = { el, x: e.clientX, y: e.clientY };
+}
+function startDrag() {
   const el = press.el, r = el.getBoundingClientRect();
   drag = { el, from: el.parentElement, dx: press.x - r.left, dy: press.y - r.top };
   Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
   document.body.appendChild(el); el.classList.add('dragging'); refresh();
-  play(el.dataset.kind === 'note' ? '../snd_paper.mp3' : '../snd_pickup.mp3');
+  play(el.classList.contains('nt') ? '../snd_paper.mp3' : '../snd_pickup.mp3');
 }
 function slotUnder(x, y, kind) {
-  return document.elementsFromPoint(x, y).find(n => n.classList && n.classList.contains('slot') && n.dataset.kind === kind) || null;
+  return document.elementsFromPoint(x, y).find(n => n.classList && n.classList.contains('slot') && n.dataset.kind === kind &&
+    !(n.querySelector('.item') && n.querySelector('.item').dataset.locked)) || null;
 }
 addEventListener('pointermove', e => {
   if (press && !drag) {
-    if (locked || Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) return;
-    startDrag(e);
+    if (press.el.dataset.locked || Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) return;
+    startDrag();
   }
   if (!drag) return;
   drag.el.style.left = (e.clientX - drag.dx) + 'px'; drag.el.style.top = (e.clientY - drag.dy) + 'px';
@@ -175,11 +246,7 @@ addEventListener('pointermove', e => {
   const s = slotUnder(e.clientX, e.clientY, drag.el.dataset.kind); if (s) s.classList.add('hot');
 });
 addEventListener('pointerup', e => {
-  if (press && !drag) {                       // a click, not a drag
-    const el = press.el; press = null;
-    if (el.classList.contains('ph')) openZoom(el.querySelector('img').src);
-    return;
-  }
+  if (press && !drag) { const el = press.el; press = null; openZoom(el); return; }
   press = null;
   if (!drag) return;
   const { el, from } = drag; drag = null;
@@ -196,28 +263,77 @@ addEventListener('pointerup', e => {
   } else {
     goHome(el);
   }
-  refresh(); check();
+  refresh(); if (stage === 1) check1(); else if (stage === 2) check2();
 });
 
-/* stage check: only when all six places are filled */
-function check() {
-  const ph = COLS.map((_, i) => slotAt('photo', i).querySelector('.item'));
-  const nt = COLS.map((_, i) => slotAt('note', i).querySelector('.item'));
-  if (ph.some(x => !x) || nt.some(x => !x)) return;
-  const wrong = [];
-  ph.forEach((p, i) => { if (ORDER_MATTERS && p.dataset.id !== PHOTOS[i].id) wrong.push(p); });
-  nt.forEach((n, i) => { if (n.dataset.id !== ph[i].dataset.id || wrong.includes(ph[i])) wrong.push(n); });
-  if (!wrong.length) return solved();
+function rejectPieces(wrong) {
   setTimeout(() => wrong.forEach(w => w.classList.add('shake')), 250);
   setTimeout(() => { wrong.forEach(w => { w.classList.remove('shake'); goHome(w); }); refresh(); }, 800);
 }
-function solved() {
-  locked = true; scene.classList.add('locked');
-  document.getElementById('threads').innerHTML = COLS.map(c => `<line x1="45.4" y1="45.6" x2="${c}" y2="52.3"/>`).join('');
-  requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.add('solved')));
-  setTimeout(() => { thought.textContent = STAGE1_DONE; thought.classList.add('on'); }, 900);
+function lock(list) { list.forEach(el => { el.dataset.locked = '1'; }); }
+function thread(x1, y1, x2, y2) {
+  const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  Object.entries({ x1, y1, x2, y2 }).forEach(([k, v]) => l.setAttribute(k, v));
+  threads.appendChild(l); requestAnimationFrame(() => requestAnimationFrame(() => l.classList.add('on')));
+}
+function say(text) { thought.classList.remove('on'); void thought.offsetWidth; thought.textContent = text; thought.classList.add('on'); }
+
+/* ---------- stage 1 check ---------- */
+function check1() {
+  const ph = S1_COLS.map((_, i) => slotAt('photo', i).querySelector('.item'));
+  const nt = S1_COLS.map((_, i) => slotAt('note', i).querySelector('.item'));
+  if (ph.some(x => !x) || nt.some(x => !x)) return;
+  const wrong = [];
+  ph.forEach((p, i) => { if (p.dataset.id !== S1_PHOTOS[i].id) wrong.push(p); });
+  nt.forEach((n, i) => { if (n.dataset.id !== ph[i].dataset.id || wrong.includes(ph[i])) wrong.push(n); });
+  if (wrong.length) return rejectPieces(wrong);
+  solved1(ph.concat(nt));
+}
+function solved1(pieces, instant) {
+  stage = 0; lock(pieces);
+  S1_COLS.forEach(c => thread(39.5, 46.9, c, S1_PHOTO.top + 0.3));
   play('../snd_pickup.mp3');
-  window.STAGE = 2;                            // next stage: waiting for Maria's description
+  setTimeout(() => say(S1_DONE), instant ? 0 : 900);
+  setTimeout(startStage2, instant ? 0 : 2600);
+}
+
+/* ---------- stage 2 ---------- */
+function startStage2() {
+  stage = 2;
+  fillTray([
+    ...S2_EVIDENCE.map(e => makePhoto('ev', e.id, e.src, Object.assign({ g: e.g }, e.doc ? { doc: '1' } : {}))),
+    ...S2_HYP.map(h => makeNote('hyp', 'h' + h.g, h.text, { g: h.g }, 'hyp')),
+  ], 5);
+  scene.classList.add('s2on'); requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.add('s2show')));
+  window.STAGE = 2;
+}
+const groupSize = g => S2_EVIDENCE.filter(e => e.g === g).length;
+function check2() {
+  const all = S2_ZONES.map(z => ({ z, ev: zoneSlots(z.id, 'ev').map(s => s.querySelector('.item')), hyp: zoneSlots(z.id, 'hyp')[0].querySelector('.item') }));
+  if (all.some(a => !a.hyp || a.ev.some(x => !x))) return;
+  const wrong = []; let ok = 0;
+  all.forEach(({ z, ev, hyp }) => {
+    if (ev[0].dataset.locked) { ok++; return; }
+    const g = +ev[0].dataset.g;
+    const right = ev.every(x => +x.dataset.g === g) && groupSize(g) === ev.length && +hyp.dataset.g === g;
+    if (right) { ok++; lock(ev.concat(hyp)); thread(...z.thread); }
+    else wrong.push(...ev, hyp);
+  });
+  if (wrong.length) return rejectPieces(wrong);
+  if (ok === S2_ZONES.length) solved2();
+}
+function solved2() {
+  stage = 3; window.STAGE = 3; play('../snd_pickup.mp3');
+  if (S2_DONE) setTimeout(() => say(S2_DONE), 900);
+}
+
+/* ?stage=2: open stage 2 directly (stage 1 already solved) */
+if (new URLSearchParams(location.search).get('stage') === '2') {
+  S1_COLS.forEach((_, i) => {
+    slotAt('photo', i).appendChild(items.find(x => x.dataset.kind === 'photo' && x.dataset.id === S1_PHOTOS[i].id));
+    slotAt('note', i).appendChild(items.find(x => x.dataset.kind === 'note' && x.dataset.id === S1_PHOTOS[i].id));
+  });
+  refresh(); solved1(items.filter(x => x.dataset.kind === 'photo' || x.dataset.kind === 'note'), true);
 }
 
 document.getElementById('gate').addEventListener('click', function () { this.classList.add('off'); });
