@@ -11,13 +11,14 @@
   #scene img.bg { position:absolute; inset:0; width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
   #desk { opacity:0; transition:opacity .6s ease; pointer-events:none; }
   #scene.unlocked #desk { opacity:1; }
-  /* XP arrow (white fill, black outline) everywhere on the laptop */
-  #scene, #scene *, #viewer, #viewer *, #zoom, #zoom * { cursor:url('cursor.png') 0 0, default !important; }
+  /* XP arrow (white fill, black outline) ONLY while the pointer is over the laptop screen
+     (Maria 08.10: must not leave the computer screen); outside it the normal system cursor */
+  body.xp, body.xp * { cursor:url('cursor.png') 0 0, default !important; }
   #screen { position:absolute; left:16.5%; top:11.8%; width:70.1%; height:65.3%; }
-  #pw { position:absolute; left:52.7%; top:51.95%; width:24.3%; height:3.1%; box-sizing:border-box; border:0; outline:none;
+  #pw { position:absolute; left:52.7%; top:51.95%; width:21.1%; height:3.1%; box-sizing:border-box; border:0; outline:none;
         background:transparent; color:#000; font: 600 calc(var(--sw) * 0.0125) Tahoma, Verdana, sans-serif;
         padding:0 .5%; letter-spacing:.12em; caret-color:#000; }
-  #go { position:absolute; left:77.4%; top:51.6%; width:3.0%; height:3.8%; }
+  #go { position:absolute; left:74.8%; top:50.7%; width:3.4%; height:4.9%; z-index:2; }
   #err { position:absolute; left:52.7%; top:56.6%; max-width:27%; display:none; background:#ffffe1; color:#000;
          border:1px solid #000; border-radius:6px; padding:.45% .7%; box-shadow:2px 2px 4px rgba(0,0,0,.45);
          font-size:calc(var(--sw) * 0.0105); line-height:1.35; }
@@ -44,6 +45,7 @@
   #owin.open { display:block; animation: winpop .18s ease-out; }
   #owin img { width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
   #owin .wclose { left:95.2%; top:0.1%; width:3.4%; height:6.5%; }
+  .orow { position:absolute; left:29.1%; width:67.2%; height:3.55%; }
   #vwin.open { display:block; animation: winpop .18s ease-out; }
   #vwin img { width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
   #vwin .wclose { left:94.3%; top:0.2%; width:3.9%; height:8.5%; }
@@ -52,7 +54,7 @@
   #file { position:absolute; left:38.52%; top:28.43%; width:12.51%; height:16.9%; border-radius:2px; }
   #file.sel { background:rgba(49,106,197,.30); outline:1px dotted #000; }
   /* character thought, like on the other pages */
-  #thought { position:absolute; left:50%; bottom:3.2%; transform:translateX(-50%); max-width:70%; display:none;
+  #thought { position:absolute; left:50%; bottom:3.2%; transform:translateX(-50%); max-width:70%; display:none; z-index:9999 !important;
              font-size:calc(var(--sw) * 0.0145); font-style:italic; color:#1b1b1b; background:#fff; padding:.7% 1.3%;
              border-radius:4px; box-shadow:0 2px 10px rgba(0,0,0,.5); text-align:center; z-index:50; pointer-events:none; }
   /* article viewer */
@@ -91,7 +93,7 @@
   <div id="err"><b>Incorrect password</b>The password you typed is incorrect. Please try again.</div>
   <div id="win"><img src="scans.png" alt=""><div id="winclose"></div><div id="file"></div></div>
   <div id="vwin"><img src="volterra.png" alt=""><div class="wclose"></div></div>
-  <div id="owin"><img src="outlook.png" alt=""><div class="wclose"></div></div>
+  <div id="owin"><img id="oimg" src="outlook.png" alt=""><div class="wclose"></div></div>
   <div id="thought"></div>
 </div></div>
 <div id="viewer"><div id="vbox"><img id="vimg" src="sarah.jpg" alt=""><div id="vsym"></div></div><div id="vcap"></div><div id="vclose">✕</div><div class="nav" id="prev">‹</div><div class="nav" id="next">›</div><div id="counter"></div></div>
@@ -128,7 +130,11 @@ scene.addEventListener('mousedown', e => { if (!scene.classList.contains('unlock
 
 /* ---------- thoughts ---------- */
 let pinned = null;   // a short-lived thought (after double-click) wins over hover
-function say(text) { if (pinned) return; thought.textContent = text || ''; thought.style.display = text ? 'block' : 'none'; }
+const MAIL_THOUGHT = "Belli ki gerçekten David'in araştırmalarını finanse etmiş.";
+let mailSeen = false;   // Maria 08.10: after opening any letter the comment stays while Outlook is open
+function say(text) { if (pinned) return;
+  const t = text || (mailSeen && document.getElementById('owin').classList.contains('open') ? MAIL_THOUGHT : '');
+  thought.textContent = t; thought.style.display = t ? 'block' : 'none'; }
 function pin(text, ms) { clearTimeout(pinned); pinned = null; say(text); pinned = setTimeout(() => { pinned = null; say(hoverText); }, ms); }
 let hoverText = '';
 
@@ -215,7 +221,18 @@ const VOL = ['v1.jpg','v2.jpg','v3.jpg','v4.jpg','v5.jpg'];   // Maria 05.10 14:
 const VOL_CAPS = ['Burası İtalya mı?', 'Burası İtalya mı?', 'Burası İtalya mı?', 'Bu da ne?', 'Bir dakika, bu çok tuhaf...'];
 let zTop = 10; function front(w) { w.classList.add('open'); w.style.zIndex = ++zTop; }
 [win, vwin, owin].forEach(w => w.addEventListener('mousedown', () => { w.style.zIndex = ++zTop; }, true));
-owin.querySelector('.wclose').addEventListener('click', e => { e.stopPropagation(); owin.classList.remove('open'); });
+owin.querySelector('.wclose').addEventListener('click', e => { e.stopPropagation(); owin.classList.remove('open'); say(hoverText); });
+/* Outlook: 8 letters in the list (Maria 08.10: each subject opens its own letter) */
+const MAILS = ['outlook.png','mail2.png','mail3.png','mail4.png','mail5.png','mail6.png','mail7.png','mail8.png'];
+const oimg = document.getElementById('oimg');
+MAILS.forEach(src => { const p = new Image(); p.src = src; });
+MAILS.forEach((src, k) => {
+  const r = document.createElement('div'); r.className = 'orow'; r.dataset.k = k + 1;
+  r.style.top = (22.12 + k * 3.55) + '%';
+  const open = e => { e.stopPropagation(); oimg.src = src; mailSeen = true; say(''); };
+  r.addEventListener('click', open); r.addEventListener('dblclick', open);
+  owin.appendChild(r);
+});
 owin.addEventListener('mousedown', e => e.stopPropagation());
 vwin.querySelector('.wclose').addEventListener('click', e => { e.stopPropagation(); vwin.classList.remove('open'); });
 vwin.addEventListener('mousedown', e => { e.stopPropagation(); if (!e.target.classList.contains('vfile')) vwin.querySelectorAll('.vfile').forEach(f => f.classList.remove('sel')); });
@@ -227,6 +244,12 @@ VOL.forEach((src, i) => {
   vwin.appendChild(f);
 });
 
+/* white cursor only over the laptop screen */
+const screenEl = document.getElementById('screen');
+function xpAt(x, y) { const r = screenEl.getBoundingClientRect();
+  document.body.classList.toggle('xp', x >= r.left && x <= r.right && y >= r.top && y <= r.bottom); }
+document.addEventListener('mousemove', e => xpAt(e.clientX, e.clientY), true);
+document.addEventListener('mouseleave', () => document.body.classList.remove('xp'));
 window.addEventListener('load', () => pw.focus());
 </script>
 </body>
