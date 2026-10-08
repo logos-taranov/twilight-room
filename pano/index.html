@@ -13,16 +13,16 @@
   #scene { --sw: min(calc(100vw - var(--trayw)), calc(100vh * 1280 / 853)); position:relative; width:var(--sw); aspect-ratio:1280/853; }
   #scene > img.bg { position:absolute; inset:0; width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
 
-  /* fixed board content (centre): David's photo + the note */
-  .fixed { position:absolute; user-select:none; -webkit-user-drag:none; pointer-events:none; filter: drop-shadow(2px 5px 7px rgba(0,0,0,.6)); }
-  #david { left:39.2%; top:11.5%; width:13.6%; transform:rotate(-2deg); }
-  #david img, #nreed img { width:100%; display:block; }
-  #nreed { left:54%; top:15%; width:16%; transform:rotate(-5deg); }
+  /* centre of the board (Maria 08.10: smaller, leave room for the next stages) */
+  .fixed { position:absolute; user-select:none; -webkit-user-drag:none; filter: drop-shadow(2px 5px 7px rgba(0,0,0,.6)); }
+  .fixed img { width:100%; display:block; -webkit-user-drag:none; }
+  #david { left:41.2%; top:29%; width:8.4%; transform:rotate(-2deg); cursor:zoom-in; }
+  #nreed { left:50.6%; top:31.5%; width:9.6%; transform:rotate(-5deg); pointer-events:none; }
 
-  /* drop slots on the lower part of the board */
-  .slot { position:absolute; border:2px dashed rgba(255,240,215,.28); border-radius:3px; box-sizing:border-box; transition:background .15s, border-color .15s; }
-  .slot.photo { top:44%; width:15.5%; height:17.44%; }
-  .slot.note  { top:62.6%; width:17%; height:16.5%; background:rgba(246,226,124,.05); }
+  /* drop places for stage 1 (lower part of the board, compact) */
+  .slot { position:absolute; border:2px dashed rgba(255,240,215,.26); border-radius:3px; box-sizing:border-box; transition:background .15s, border-color .15s; }
+  .slot.photo { top:52%; width:9.6%; height:10.8%; }
+  .slot.note  { top:63.6%; width:12%; height:10.6%; background:rgba(246,226,124,.05); }
   .slot.hot   { border-color:rgba(255,236,170,.85); background:rgba(255,236,170,.14); }
   .slot.filled { border-color:transparent; background:none; }
 
@@ -32,30 +32,40 @@
           box-shadow: inset 0 0 40px rgba(0,0,0,.75); display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3, 1fr); gap:12px; }
   .cell { position:relative; display:flex; align-items:center; justify-content:center; min-height:0; }
 
-  /* draggable evidence */
+  /* evidence pieces */
   .item { position:relative; cursor:grab; touch-action:none; user-select:none; -webkit-user-drag:none; box-sizing:border-box; }
   .cell > .item { width:100%; }
   .slot > .item { width:100%; height:100%; }
   .item.ph img { width:100%; height:100%; object-fit:contain; display:block; pointer-events:none; filter: drop-shadow(2px 4px 6px rgba(0,0,0,.65)); }
-  .cell > .item.ph img { height:auto; max-height:30vh; }
-  .item.ph.framed img { background:#efe9dc; padding:5% 5% 7%; box-sizing:border-box; }
-  .item.nt { background:#f6e27c; color:#2a2414; font-family:'Caveat', 'Segoe Print', 'Comic Sans MS', cursive; font-weight:700; line-height:1.12;
-             padding:7% 8%; box-shadow:2px 4px 8px rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; text-align:center; transform:rotate(-1.5deg); }
+  .cell > .item.ph img { height:auto; max-height:28vh; }
+  .item.nt { background:#f6e27c; color:#2a2414; font-family:'Caveat', 'Segoe Print', 'Comic Sans MS', cursive; font-weight:700; line-height:1.1;
+             padding:6% 7%; box-shadow:2px 4px 8px rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; text-align:center;
+             transform:rotate(-1.5deg); overflow:hidden; }
   .cell > .item.nt { font-size:calc(var(--trayw) * 0.043); min-height:9vh; }
-  .slot > .item.nt { font-size:calc(var(--sw) * 0.0142); }
   .item.dragging { position:fixed !important; z-index:100; cursor:grabbing; pointer-events:none; transform:rotate(-3deg) scale(1.03); }
-  .item.dragging.nt { transform:rotate(-4deg) scale(1.03); }
-  /* push-pin on everything pinned to the board */
-  .slot > .item::before, #david::before, #nreed::before { content:""; position:absolute; left:50%; top:-1.5%; width:calc(var(--sw) * 0.011); height:calc(var(--sw) * 0.011);
+  .slot > .item::before, #david::before, #nreed::before { content:""; position:absolute; left:50%; top:-2%; width:calc(var(--sw) * 0.0095); height:calc(var(--sw) * 0.0095);
      transform:translate(-50%, -30%); border-radius:50%; background: radial-gradient(circle at 35% 35%, #ff8a8a, #b5121b 60%, #5a0408); box-shadow:1px 2px 3px rgba(0,0,0,.6); z-index:3; }
   .shake { animation: shake .45s; }
   @keyframes shake { 0%,100%{translate:0} 20%{translate:-6px} 40%{translate:6px} 60%{translate:-4px} 80%{translate:4px} }
-  .locked .item { cursor:default; }
+  .locked .slot .item { cursor:zoom-in; }
 
   /* red threads after the stage is solved */
   #threads { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2; }
-  #threads line { stroke:#b3121c; stroke-width:.32; stroke-linecap:round; filter: drop-shadow(0 .2px .3px rgba(0,0,0,.6)); stroke-dasharray:60; stroke-dashoffset:60; transition: stroke-dashoffset 1.4s ease; }
+  #threads line { stroke:#b3121c; stroke-width:.3; stroke-linecap:round; stroke-dasharray:60; stroke-dashoffset:60; transition: stroke-dashoffset 1.4s ease; }
   #scene.solved #threads line { stroke-dashoffset:0; }
+
+  /* heroine's comment, like on the other pages */
+  #thought { position:absolute; left:50%; bottom:4%; transform:translateX(-50%); max-width:74%; display:none; z-index:8;
+             font-size:calc(var(--sw) * 0.0145); font-style:italic; color:#1b1b1b; background:#fff; padding:.7% 1.3%;
+             border-radius:4px; box-shadow:0 2px 10px rgba(0,0,0,.55); text-align:center; pointer-events:none; }
+  #thought.on { display:block; animation: fade 1s ease; }
+  @keyframes fade { from { opacity:0 } to { opacity:1 } }
+
+  /* moderate zoom (Maria 08.10: bigger, but not full screen) */
+  #zoom { position:fixed; inset:0; z-index:150; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); cursor:zoom-out; }
+  #zoom.on { display:flex; }
+  #zoom img { max-width:min(46vw, 620px); max-height:58vh; filter: drop-shadow(4px 8px 16px rgba(0,0,0,.7)); animation: zin .18s ease-out; }
+  @keyframes zin { from { transform:scale(.85); opacity:.4 } to { transform:none; opacity:1 } }
 
   #gate { position:fixed; inset:0; z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center;
     background: radial-gradient(ellipse at center, rgba(32,24,18,.93), rgba(6,5,4,.98)); cursor:pointer; text-align:center; padding:20px; }
@@ -71,74 +81,106 @@
   <svg id="threads" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
   <div class="fixed" id="david"><img src="david.jpg" alt="David Reed"></div>
   <div class="fixed" id="nreed"><img src="note.png" alt="DAVİD REED NEREDE?"></div>
+  <div id="thought"></div>
 </div></div>
 <div id="tray"></div>
+<div id="zoom"><img alt=""></div>
 <div id="mute" title="Ses">🔊</div>
 <div id="gate"><h1>David Reed nerede?</h1><p>Girmek için tıklayın 🔊</p></div>
 <script>
-/* Page 5, stage 1 (Maria 08.10): put the 3 photos on the lower part of the board, in story order
-   left -> right, and the matching sticky note under each. Wrong pieces go back to the tray when
-   all six places are filled; the right ones stay. */
-const ORDER_MATTERS = true;   // photos must go left->right as 1 motel, 2 camera, 3 cliff
+/* Page 5, stage 1 (Maria 08.10): 3 photos on the lower part of the board, left -> right in story
+   order, and the matching sticky note under each. Wrong pieces go back to the tray once all six
+   places are filled; the right ones stay. Click a photo = moderate zoom, drag = move. */
+const ORDER_MATTERS = true;            // photos left -> right: 1 motel, 2 room, 3 cliff
 const PHOTOS = [
   { id:'motel', src:'motel.jpg' },
-  { id:'cctv',  src:'cctv.jpg', framed:true },
-  { id:'cliff', src:'cliff.jpg' },
+  { id:'room',  src:'room.png' },
+  { id:'cliff', src:'cliff.png' },
 ];
 const NOTES = [
   { id:'motel', text:"David'in son kaldığı yer. Bu Pazartesi saat 08.17'de ayrıldı." },
-  { id:'cctv',  text:"David'in görüldüğü son kamera kaydı. Çatıda garip bir leke var." },
+  { id:'room',  text:"David'in kıyafetleri ve kişisel eşyaları odada kaldı. Görünüşe göre otelden tamamen ayrılmayı planlamıyordu." },
   { id:'cliff', text:"David'in eşyaları, kan izleri ve boğuşma belirtileri burada bulundu." },
 ];
-const SLOT_X = { photo:[17.25, 41.75, 66.25], note:[16.5, 41, 65.5] };
+const STAGE1_DONE = "David'in izini uçurumda kaybettik. Ancak cesedi bulunamadı.";
+const COLS = [36, 49.5, 63];           // column centres, % of the scene
+const PH_W = 9.6, NT_W = 12;
 
 const scene = document.getElementById('scene'), tray = document.getElementById('tray');
+const zoom = document.getElementById('zoom'), zimg = zoom.querySelector('img'), thought = document.getElementById('thought');
 let muted = false, locked = false;
-const sfx = {};
-function play(name) { if (muted) return; try { (sfx[name] = sfx[name] || new Audio(name)).cloneNode().play().catch(() => {}); } catch (e) {} }
+function play(name) { if (muted) return; try { new Audio(name).play().catch(() => {}); } catch (e) {} }
 
-/* board slots */
+/* places on the board */
 const slots = [];
-['photo', 'note'].forEach(kind => SLOT_X[kind].forEach((x, i) => {
-  const s = document.createElement('div'); s.className = 'slot ' + kind; s.dataset.kind = kind; s.dataset.i = i;
-  s.style.left = x + '%'; scene.appendChild(s); slots.push(s);
-}));
+COLS.forEach((c, i) => {
+  [['photo', PH_W], ['note', NT_W]].forEach(([kind, w]) => {
+    const s = document.createElement('div'); s.className = 'slot ' + kind; s.dataset.kind = kind; s.dataset.i = i;
+    s.style.left = (c - w / 2) + '%'; scene.appendChild(s); slots.push(s);
+  });
+});
+const slotAt = (kind, i) => slots.find(s => s.dataset.kind === kind && +s.dataset.i === i);
 
-/* tray: photos and notes shuffled into 6 home cells */
+/* tray: photos and notes shuffled */
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 const items = [];
-PHOTOS.forEach(p => { const el = document.createElement('div'); el.className = 'item ph' + (p.framed ? ' framed' : ''); el.dataset.kind = 'photo'; el.dataset.id = p.id;
+PHOTOS.forEach(p => { const el = document.createElement('div'); el.className = 'item ph'; el.dataset.kind = 'photo'; el.dataset.id = p.id;
   el.innerHTML = `<img src="${p.src}" alt="">`; items.push(el); });
 NOTES.forEach(n => { const el = document.createElement('div'); el.className = 'item nt'; el.dataset.kind = 'note'; el.dataset.id = n.id;
   el.textContent = n.text; items.push(el); });
-const order = shuffle(items.slice());
-order.forEach(el => { const c = document.createElement('div'); c.className = 'cell'; tray.appendChild(c); c.appendChild(el); el.home = c; });
+shuffle(items.slice()).forEach(el => { const c = document.createElement('div'); c.className = 'cell'; tray.appendChild(c); c.appendChild(el); el.home = c; });
 
+/* sticky-note text always fits its place on the board */
+function fit(el) {
+  if (!el.classList.contains('nt')) return;
+  if (!el.parentElement.classList.contains('slot')) { el.style.fontSize = ''; return; }
+  const sw = scene.getBoundingClientRect().width; let fs = sw * 0.0118; el.style.fontSize = fs + 'px';
+  while (fs > 6 && el.scrollHeight > el.clientHeight + 1) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+}
+function refresh() { slots.forEach(s => s.classList.toggle('filled', !!s.querySelector('.item'))); items.forEach(fit); }
+addEventListener('resize', refresh);
 function goHome(el) { el.home.appendChild(el); }
-function slotOf(el) { return el.parentElement && el.parentElement.classList.contains('slot') ? el.parentElement : null; }
-function refreshSlots() { slots.forEach(s => s.classList.toggle('filled', !!s.querySelector('.item'))); }
 
-/* drag & drop (mouse + touch through pointer events) */
-let drag = null;
+/* zoom */
+function openZoom(src) { zimg.src = src; zoom.classList.add('on'); }
+zoom.addEventListener('click', () => zoom.classList.remove('on'));
+addEventListener('keydown', e => { if (e.key === 'Escape') zoom.classList.remove('on'); });
+document.getElementById('david').addEventListener('click', () => openZoom('david.jpg'));
+
+/* drag & drop; a press without movement on a photo = zoom */
+let press = null, drag = null;
 items.forEach(el => el.addEventListener('pointerdown', e => {
-  if (locked || e.button > 0) return;
+  if (e.button > 0) return;
   e.preventDefault();
-  const r = el.getBoundingClientRect();
-  drag = { el, from: el.parentElement, dx: e.clientX - r.left, dy: e.clientY - r.top };
-  Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
-  document.body.appendChild(el); el.classList.add('dragging'); refreshSlots();
-  play(el.dataset.kind === 'note' ? '../snd_paper.mp3' : '../snd_pickup.mp3');
+  press = { el, x: e.clientX, y: e.clientY };
 }));
+function startDrag(e) {
+  const el = press.el, r = el.getBoundingClientRect();
+  drag = { el, from: el.parentElement, dx: press.x - r.left, dy: press.y - r.top };
+  Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+  document.body.appendChild(el); el.classList.add('dragging'); refresh();
+  play(el.dataset.kind === 'note' ? '../snd_paper.mp3' : '../snd_pickup.mp3');
+}
 function slotUnder(x, y, kind) {
   return document.elementsFromPoint(x, y).find(n => n.classList && n.classList.contains('slot') && n.dataset.kind === kind) || null;
 }
 addEventListener('pointermove', e => {
+  if (press && !drag) {
+    if (locked || Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) return;
+    startDrag(e);
+  }
   if (!drag) return;
   drag.el.style.left = (e.clientX - drag.dx) + 'px'; drag.el.style.top = (e.clientY - drag.dy) + 'px';
   slots.forEach(s => s.classList.remove('hot'));
   const s = slotUnder(e.clientX, e.clientY, drag.el.dataset.kind); if (s) s.classList.add('hot');
 });
 addEventListener('pointerup', e => {
+  if (press && !drag) {                       // a click, not a drag
+    const el = press.el; press = null;
+    if (el.classList.contains('ph')) openZoom(el.querySelector('img').src);
+    return;
+  }
+  press = null;
   if (!drag) return;
   const { el, from } = drag; drag = null;
   el.classList.remove('dragging'); el.removeAttribute('style'); slots.forEach(s => s.classList.remove('hot'));
@@ -150,33 +192,32 @@ addEventListener('pointerup', e => {
     }
     target.appendChild(el); play('../snd_pickup.mp3');
   } else if (from.classList && from.classList.contains('slot') && !tray.contains(document.elementFromPoint(e.clientX, e.clientY))) {
-    from.appendChild(el);            // dropped nowhere: back to the board place it came from
+    from.appendChild(el);
   } else {
-    goHome(el);                      // dropped on the tray (or came from it): back to its cell
+    goHome(el);
   }
-  refreshSlots(); check();
+  refresh(); check();
 });
 
 /* stage check: only when all six places are filled */
 function check() {
-  const ph = SLOT_X.photo.map((_, i) => slots.find(s => s.dataset.kind === 'photo' && +s.dataset.i === i).querySelector('.item'));
-  const nt = SLOT_X.note.map((_, i) => slots.find(s => s.dataset.kind === 'note' && +s.dataset.i === i).querySelector('.item'));
+  const ph = COLS.map((_, i) => slotAt('photo', i).querySelector('.item'));
+  const nt = COLS.map((_, i) => slotAt('note', i).querySelector('.item'));
   if (ph.some(x => !x) || nt.some(x => !x)) return;
   const wrong = [];
   ph.forEach((p, i) => { if (ORDER_MATTERS && p.dataset.id !== PHOTOS[i].id) wrong.push(p); });
   nt.forEach((n, i) => { if (n.dataset.id !== ph[i].dataset.id || wrong.includes(ph[i])) wrong.push(n); });
   if (!wrong.length) return solved();
   setTimeout(() => wrong.forEach(w => w.classList.add('shake')), 250);
-  setTimeout(() => { wrong.forEach(w => { w.classList.remove('shake'); goHome(w); }); refreshSlots(); }, 800);
+  setTimeout(() => { wrong.forEach(w => { w.classList.remove('shake'); goHome(w); }); refresh(); }, 800);
 }
 function solved() {
   locked = true; scene.classList.add('locked');
-  const svg = document.getElementById('threads');
-  // thread from David's photo down to the pin of every placed photo (viewBox = % of the scene)
-  svg.innerHTML = SLOT_X.photo.map(x => `<line x1="46" y1="38" x2="${x + 7.75}" y2="44.4"/>`).join('');
+  document.getElementById('threads').innerHTML = COLS.map(c => `<line x1="45.4" y1="45.6" x2="${c}" y2="52.3"/>`).join('');
   requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.add('solved')));
+  setTimeout(() => { thought.textContent = STAGE1_DONE; thought.classList.add('on'); }, 900);
   play('../snd_pickup.mp3');
-  window.STAGE = 2;                  // stage 2: waiting for Maria's description
+  window.STAGE = 2;                            // next stage: waiting for Maria's description
 }
 
 document.getElementById('gate').addEventListener('click', function () { this.classList.add('off'); });
