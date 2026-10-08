@@ -127,13 +127,13 @@ const VIEWS = {
                 inner:[ { id:"bagin", x:8, y:8, w:84, h:82, text:"", sound:"rustle", action:"bagSearch" } ] },
   photoFront: { image:"photo_front.jpg", caption:"Ne mutlu bir çift! Neresi acaba?",
                 inner:[ { id:"photo", x:25, y:19, w:70, h:57, text:"Arkasına bak", sound:"paper", go:"photoBack" } ] },
-  photoBack:  { image:"photo_back.jpg", caption:"Glacier… Ha, Montana’daki o kocaman milli park. Bu fotoğrafı yanıma alayım, işime yarar.",
+  photoBack:  { image:"photo_back.jpg?v=20261008", caption:"Glacier… Ha, Montana’daki o kocaman milli park. Bu fotoğrafı yanıma alayım, işime yarar.",
                 inner:[ { id:"photoback", x:0, y:0, w:100, h:100, text:"", sound:"", action:"takePhoto" } ] },
   idcard:     { image:"idcard.jpg", caption:"Park çalışanına ait bir kimlik kartı…",
                 inner:[ { id:"card", x:30, y:20, w:61, h:53, text:"Kartı al", sound:"", action:"takeCard" } ] },
   sink:       { image:"undersink.jpg", caption:"",
                 inner:[ { id:"towels", x:18, y:46, w:54, h:36, text:"", sound:"snd_money.mp3",
-                  next:{ image:"money.jpg", closeSound:"snd_money.mp3", caption:"Tam sekiz bin dolar… Bu kadar parayı böyle ucuz bir motelde bırakıp gitmiş. Hem de havluların arkasına saklayarak!" } } ] }
+                  next:{ image:"money.jpg?v=20261008", closeSound:"snd_money.mp3", caption:"Tam sekiz bin dolar… Bu kadar parayı böyle ucuz bir motelde bırakıp gitmiş. Hem de havluların arkasına saklayarak!" } } ] }
 };
 const STATE = { photoTaken:false, cardTaken:false, notebookTaken:false, locked:false };
 /* Инвентарь: 3 предмета, картинки появляются по мере сбора; все три → мысль на общем плане. */
