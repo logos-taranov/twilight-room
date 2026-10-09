@@ -5,6 +5,8 @@
 <meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dizüstü bilgisayar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 <style>
   html, body { margin:0; height:100%; background:#050607; overflow:hidden; font-family: Tahoma, Verdana, "Segoe UI", sans-serif; }
   #stage { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
@@ -80,6 +82,21 @@
   #counter { position:fixed; bottom:14px; left:50%; transform:translateX(-50%); color:#ddd; font-size:15px; display:none; z-index:21; }
   #viewer.gallery #counter { display:block; }
   #vclose { position:fixed; top:12px; right:20px; font-size:36px; color:#e8e8e8; user-select:none; z-index:21; }
+  /* Maria 09.10: what to find, as a sticky note left of the screen; items tick as the player finds them */
+  #todo { position:absolute; left:.9%; top:3%; width:14.6%; z-index:8; box-sizing:border-box; padding:1% 1.1% 1.2%;
+          background:#f7e48a; color:#2b2410; font-family:'Caveat', 'Segoe Print', 'Comic Sans MS', cursive; font-weight:600;
+          font-size:calc(var(--sw) * 0.0148); line-height:1.15; transform:rotate(-2.2deg); box-shadow:3px 5px 12px rgba(0,0,0,.55); cursor:default; }
+  #todo:before { content:""; position:absolute; left:50%; top:-.35em; width:.75em; height:.75em; transform:translateX(-50%); border-radius:50%;
+                 background: radial-gradient(circle at 35% 35%, #ff8a8a, #b5121b 60%, #5a0408); box-shadow:1px 2px 3px rgba(0,0,0,.6); }
+  #todo .th { font-weight:700; margin-bottom:.3em; border-bottom:1.5px solid rgba(43,36,16,.35); padding-bottom:.15em; }
+  #todo ul { list-style:none; margin:0; padding:0; }
+  #todo li { display:flex; align-items:center; gap:.35em; margin:.2em 0; }
+  #todo .cb { flex:0 0 auto; width:.85em; height:.85em; border:2px solid #2b2410; border-radius:2px; position:relative; }
+  #todo .cb svg { position:absolute; left:-.12em; top:-.4em; width:1.3em; height:1.3em; overflow:visible; }
+  #todo .cb path { fill:none; stroke:#b3121c; stroke-width:3.4; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:40; stroke-dashoffset:40; transition: stroke-dashoffset .45s ease; }
+  #todo li.done .cb path { stroke-dashoffset:0; }
+  #todo li.done .tx { text-decoration: line-through; text-decoration-color: rgba(179,18,27,.75); }
+  #todo.complete .th { color:#1d6b2c; }
   #mute { position:fixed; left:16px; bottom:14px; z-index:30; font-size:22px; opacity:.7; user-select:none; cursor:pointer; }
 </style>
 </head>
@@ -96,6 +113,11 @@
   <div id="vwin"><img src="volterra.png" alt=""><div class="wclose"></div></div>
   <div id="owin"><img id="oimg" src="outlook.png" alt=""><div class="wclose"></div></div>
   <div id="thought"></div>
+  <div id="todo"><div class="th">Bulmam gerekenler:</div><ul>
+    <li data-k="mail"><span class="cb"><svg viewBox="0 0 24 24"><path d="M3 13 L9.5 20 L22 2"/></svg></span><span class="tx">David'in yazışmaları</span></li>
+    <li data-k="photos"><span class="cb"><svg viewBox="0 0 24 24"><path d="M3 13 L9.5 20 L22 2"/></svg></span><span class="tx">Fotoğraflar <span class="cnt">(0/5)</span></span></li>
+    <li data-k="scan"><span class="cb"><svg viewBox="0 0 24 24"><path d="M3 13 L9.5 20 L22 2"/></svg></span><span class="tx">Taranmış belgeler</span></li>
+  </ul></div>
 </div></div>
 <div id="viewer"><div id="vbox"><img id="vimg" src="sarah.jpg" alt=""><div id="vsym"></div></div><div id="vcap"></div><div id="vclose">✕</div><div class="nav" id="prev">‹</div><div class="nav" id="next">›</div><div id="counter"></div></div>
 <div id="zoom"><img src="symbol.jpg" alt=""><div id="zcap">Bu sembolü daha önce görmüştüm!</div><div id="zclose">✕</div></div>
@@ -181,7 +203,7 @@ const file = document.getElementById('file');
 document.getElementById('winclose').addEventListener('click', e => { e.stopPropagation(); win.classList.remove('open'); });
 win.addEventListener('mousedown', e => { e.stopPropagation(); if (e.target !== file) file.classList.remove('sel'); });
 file.addEventListener('mousedown', e => { e.stopPropagation(); file.classList.add('sel'); });
-file.addEventListener('dblclick', () => openViewer(['sarah.jpg'], 0));
+file.addEventListener('dblclick', () => { openViewer(['sarah.jpg'], 0); found('scan'); });
 const vimg = document.getElementById('vimg'), counter = document.getElementById('counter');
 let gal = [], gi = 0;
 const vcap = document.getElementById('vcap'), vsym = document.getElementById('vsym'), zoomEl = document.getElementById('zoom');
@@ -189,6 +211,7 @@ let caps = [], symAt = -1, symHover = false;
 function cap(t) { vcap.textContent = t || ''; vcap.style.display = t ? 'block' : 'none'; }
 function showGal() {
   vimg.src = gal[gi]; counter.textContent = (gi + 1) + ' / ' + gal.length;
+  if (gal === VOL) seenPhoto(gi);
   vsym.style.display = gi === symAt ? 'block' : 'none'; symHover = false; cap(caps[gi]);
 }
 function openViewer(list, i, captions, symbolIndex) {
@@ -230,7 +253,7 @@ MAILS.forEach(src => { const p = new Image(); p.src = src; });
 MAILS.forEach((src, k) => {
   const r = document.createElement('div'); r.className = 'orow'; r.dataset.k = k + 1;
   r.style.top = (22.12 + k * 3.55) + '%';
-  const open = e => { e.stopPropagation(); oimg.src = src; mailSeen = true; say(''); };
+  const open = e => { e.stopPropagation(); oimg.src = src; mailSeen = true; say(''); found('mail'); };
   r.addEventListener('click', open); r.addEventListener('dblclick', open);
   owin.appendChild(r);
 });
@@ -244,6 +267,23 @@ VOL.forEach((src, i) => {
   f.addEventListener('dblclick', () => openViewer(VOL, i, VOL_CAPS, 4));
   vwin.appendChild(f);
 });
+
+/* ---------- what to find (Maria 09.10): at least one letter, the scanned clipping, the photos ---------- */
+const FOUND = { mail: false, scan: false, photos: false }, seenPhotos = new Set();
+function found(k) {
+  if (FOUND[k]) return; FOUND[k] = true;
+  const li = document.querySelector(`#todo li[data-k="${k}"]`); if (li) li.classList.add('done');
+  if (FOUND.mail && FOUND.scan && FOUND.photos) {
+    const t = document.getElementById('todo'); t.classList.add('complete'); t.querySelector('.th').textContent = 'Görev tamamlandı!';
+    window.TASK_DONE = true;
+  }
+}
+function seenPhoto(i) {
+  seenPhotos.add(i);
+  document.querySelector('#todo li[data-k="photos"] .cnt').textContent = '(' + seenPhotos.size + '/' + VOL.length + ')';
+  if (seenPhotos.size === VOL.length) found('photos');
+}
+window.FOUND = FOUND;
 
 /* white cursor only over the laptop screen */
 const screenEl = document.getElementById('screen');

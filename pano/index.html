@@ -99,7 +99,7 @@
              #fbf7ea;
            box-shadow: 0 10px 40px rgba(0,0,0,.7); transform:rotate(-.6deg); }
   #sheet ol { list-style:none; margin:0; padding:0; }
-  #sheet li { position:relative; display:flex; align-items:flex-start; gap:.55em; margin:0 0 .5em; cursor:pointer; user-select:none; }
+  #sheet li { position:relative; display:flex; align-items:flex-start; gap:.55em; margin:0 0 .38em; cursor:pointer; user-select:none; }
   #sheet .cb { flex:0 0 auto; width:.95em; height:.95em; margin-top:.22em; border:2px solid #24345c; border-radius:2px; position:relative; transform:rotate(-2deg); }
   #sheet .cb svg { position:absolute; left:-.15em; top:-.45em; width:1.45em; height:1.45em; overflow:visible; }
   #sheet .cb path { fill:none; stroke:#b3121c; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:40; stroke-dashoffset:40; transition: stroke-dashoffset .35s ease; }
@@ -109,7 +109,8 @@
   #sheetfoot { display:flex; flex-wrap:wrap; align-items:center; gap:.4em 1.2em; margin-top:.2em; }
   #copybtn { cursor:pointer; color:#24345c; font-weight:700; user-select:none; border-bottom:1.5px solid rgba(36,52,92,.45); }
   #copybtn:hover { color:#3a5bb0; }
-  #copyhint { width:100%; font-size:.78em; color:#55607a; }
+  #copyhint { width:100%; display:flex; align-items:center; gap:.45em; font-size:.9em; font-weight:700; color:#26304d; line-height:1.1; }
+  #copyhint .mouse { flex:0 0 auto; height:1.6em; width:auto; }
   #toast { position:fixed; left:50%; bottom:5%; transform:translateX(-50%); z-index:190; display:none; max-width:80vw; text-align:center;
            font: 15px Georgia, serif; color:#f3e6cf; background:rgba(12,10,8,.9); border:1px solid rgba(201,164,106,.6); border-radius:4px; padding:10px 18px; }
   #toast.on { display:block; animation: fade .3s ease; }
@@ -139,7 +140,7 @@
 <div id="zoom"><img alt=""><div class="bignote"></div><div class="zcap"></div></div>
 <div id="paper"><div id="sheet"><div id="sheethead">Size doğru gelen ifadeleri işaretleyin.</div><ol></ol>
   <div id="sheetfoot"><span id="back">← Panoya dön</span><span id="copybtn">📋 Sayfanın resmini kopyala</span>
-  <span id="copyhint">İpucu: sayfaya sağ tıklayarak da resmini kopyalayabilir ve istediğiniz kişiye gönderebilirsiniz.</span></div></div></div>
+  <span id="copyhint"><svg class="mouse" viewBox="0 0 24 34" aria-hidden="true"><rect x="2" y="2" width="20" height="30" rx="10" fill="#f4f1ea" stroke="#222" stroke-width="2"/><path d="M12 2 A10 10 0 0 1 22 12 V14 H12 Z" fill="#d23a2a" stroke="#222" stroke-width="1.5"/><line x1="2" y1="14" x2="22" y2="14" stroke="#222" stroke-width="1.5"/><line x1="12" y1="2" x2="12" y2="14" stroke="#222" stroke-width="1.5"/></svg><span>İpucu: sayfaya sağ tıklayarak da resmini kopyalayabilir ve istediğiniz kişiye gönderebilirsiniz.</span></span></div></div></div>
 <div id="toast"></div>
 <div id="mute" title="Ses">🔊</div>
 <div id="gate"><h1>David Reed nerede?</h1><p>Girmek için tıklayın 🔊</p></div>
@@ -253,7 +254,7 @@ S1_COLS.forEach((c, i) => {
   addSlot('note',  { left: c - S1_NOTE.w / 2,  top: S1_NOTE.top,  w: S1_NOTE.w,  h: S1_NOTE.h },  { i, label: 'Not' });
 });
 S2_ZONES.forEach((z, k) => {
-  z.xs.forEach(x => addSlot('ev', { left: x - z.w / 2, top: z.top, w: z.w, h: z.h }, { zone: z.id, cls: 's2', label: 'Kanıt' }));
+  z.xs.forEach(x => addSlot('ev', { left: x - z.w / 2, top: z.top, w: z.w, h: z.h }, { zone: z.id, cls: 's2', label: 'İpucu' }));
   addSlot('hyp', z.hyp, { zone: z.id, cls: 's2', label: (k + 1) + '. versiyon' });
 });
 const slotAt = (kind, i) => slots.find(s => s.dataset.kind === kind && +s.dataset.i === i);
@@ -413,7 +414,7 @@ function say(text) { stageLine = text; thought.classList.remove('on'); void thou
 /* Maria 09.10: testers did not understand what to do — a short task line for every stage */
 const HINTS = {
   1: '<b>Görev:</b> Sağdaki kutudan fotoğrafları panodaki «Fotoğraf» yerlerine sürükleyin, her fotoğrafın altındaki «Not» yerine de ona uyan sarı notu koyun. Büyütmek için karta tıklayın.',
-  2: '<b>Görev:</b> Kanıtları üç gruba ayırıp «Kanıt» yerlerine yerleştirin ve her grubun yanındaki «versiyon» yerine ona uyan mavi versiyon kartını koyun.',
+  2: '<b>Görev:</b> İpuçlarını üç gruba ayırıp «İpucu» yerlerine yerleştirin ve her grubun yanındaki «versiyon» yerine ona uyan mavi versiyon kartını koyun.',
   3: '<b>Görev:</b> Çıkarımlarınızı değerlendirmek için aşağıdaki düğmeye basın.',
 };
 function setHint(n) { document.getElementById('hint').innerHTML = HINTS[n] || ''; }
