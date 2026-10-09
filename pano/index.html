@@ -25,6 +25,17 @@
   .slot.note, .slot.hyp { background:rgba(246,226,124,.05); }
   .slot.hot { border-color:rgba(255,236,170,.85); background:rgba(255,236,170,.14); }
   .slot.filled { border-color:transparent; background:none; }
+  /* Maria 09.10: empty places say what goes there */
+  .slot::after { content:attr(data-label); position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center;
+                 font: italic calc(var(--sw) * 0.0105) Georgia, serif; color:rgba(255,240,215,.62); pointer-events:none; letter-spacing:.02em; }
+  .slot.filled::after { display:none; }
+  .slot.hyp { border-color:rgba(159,217,242,.7); background:rgba(159,217,242,.10); }
+  .slot.hyp::after { color:rgba(200,236,252,.95); font-weight:bold; font-size:calc(var(--sw) * 0.0125); }
+  .slot.hyp.hot { border-color:rgba(190,232,252,1); background:rgba(159,217,242,.25); }
+  #hint { position:absolute; left:50%; top:1.2%; transform:translateX(-50%); max-width:78%; z-index:7; pointer-events:none;
+          font: calc(var(--sw) * 0.0118) Georgia, serif; color:#f3e6cf; background:rgba(12,10,8,.78); border:1px solid rgba(201,164,106,.55);
+          border-radius:4px; padding:.45% 1.1%; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.5); }
+  #hint b { color:#e9c98d; }
   .slot.s2 { display:none; opacity:0; }
   #scene.s2on .slot.s2 { display:block; }
   #scene.s2show .slot.s2 { opacity:1; }
@@ -94,6 +105,14 @@
   #sheet .cb path { fill:none; stroke:#b3121c; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:40; stroke-dashoffset:40; transition: stroke-dashoffset .35s ease; }
   #sheet li.on .cb path { stroke-dashoffset:0; }
   #sheet .no { flex:0 0 auto; min-width:1.4em; color:#3a4a73; }
+  #sheethead { font-weight:700; color:#7a1f1f; margin:0 0 .45em; }
+  #sheetfoot { display:flex; flex-wrap:wrap; align-items:center; gap:.4em 1.2em; margin-top:.2em; }
+  #copybtn { cursor:pointer; color:#24345c; font-weight:700; user-select:none; border-bottom:1.5px solid rgba(36,52,92,.45); }
+  #copybtn:hover { color:#3a5bb0; }
+  #copyhint { width:100%; font-size:.78em; color:#55607a; }
+  #toast { position:fixed; left:50%; bottom:5%; transform:translateX(-50%); z-index:190; display:none; max-width:80vw; text-align:center;
+           font: 15px Georgia, serif; color:#f3e6cf; background:rgba(12,10,8,.9); border:1px solid rgba(201,164,106,.6); border-radius:4px; padding:10px 18px; }
+  #toast.on { display:block; animation: fade .3s ease; }
   #back { display:inline-block; margin-top:.2em; cursor:pointer; color:#7a1f1f; font-weight:700; user-select:none; border-bottom:1.5px solid rgba(122,31,31,.45); }
   #back:hover { color:#b3121c; border-bottom-color:#b3121c; }
 
@@ -111,13 +130,17 @@
   <svg id="threads" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
   <div class="fixed" id="david"><img src="david.jpg?v=2" alt="David Reed"></div>
   <div class="fixed" id="nreed"><img src="note.png?v=2" alt="DAVİD REED NEREDE?"></div>
+  <div id="hint"></div>
   <div id="thought"></div>
   <div id="evalbtn">Çıkarımları değerlendir</div>
   <div id="flash"></div>
 </div></div>
 <div id="tray"></div>
 <div id="zoom"><img alt=""><div class="bignote"></div><div class="zcap"></div></div>
-<div id="paper"><div id="sheet"><ol></ol><div id="back">← Panoya dön</div></div></div>
+<div id="paper"><div id="sheet"><div id="sheethead">Size doğru gelen ifadeleri işaretleyin.</div><ol></ol>
+  <div id="sheetfoot"><span id="back">← Panoya dön</span><span id="copybtn">📋 Sayfanın resmini kopyala</span>
+  <span id="copyhint">İpucu: sayfaya sağ tıklayarak da resmini kopyalayabilir ve istediğiniz kişiye gönderebilirsiniz.</span></div></div></div>
+<div id="toast"></div>
 <div id="mute" title="Ses">🔊</div>
 <div id="gate"><h1>David Reed nerede?</h1><p>Girmek için tıklayın 🔊</p></div>
 <style>
@@ -226,12 +249,12 @@ function addSlot(kind, rect, extra) {
   scene.appendChild(s); slots.push(s); return s;
 }
 S1_COLS.forEach((c, i) => {
-  addSlot('photo', { left: c - S1_PHOTO.w / 2, top: S1_PHOTO.top, w: S1_PHOTO.w, h: S1_PHOTO.h }, { i });
-  addSlot('note',  { left: c - S1_NOTE.w / 2,  top: S1_NOTE.top,  w: S1_NOTE.w,  h: S1_NOTE.h },  { i });
+  addSlot('photo', { left: c - S1_PHOTO.w / 2, top: S1_PHOTO.top, w: S1_PHOTO.w, h: S1_PHOTO.h }, { i, label: 'Fotoğraf' });
+  addSlot('note',  { left: c - S1_NOTE.w / 2,  top: S1_NOTE.top,  w: S1_NOTE.w,  h: S1_NOTE.h },  { i, label: 'Not' });
 });
-S2_ZONES.forEach(z => {
-  z.xs.forEach(x => addSlot('ev', { left: x - z.w / 2, top: z.top, w: z.w, h: z.h }, { zone: z.id, cls: 's2' }));
-  addSlot('hyp', z.hyp, { zone: z.id, cls: 's2' });
+S2_ZONES.forEach((z, k) => {
+  z.xs.forEach(x => addSlot('ev', { left: x - z.w / 2, top: z.top, w: z.w, h: z.h }, { zone: z.id, cls: 's2', label: 'Kanıt' }));
+  addSlot('hyp', z.hyp, { zone: z.id, cls: 's2', label: (k + 1) + '. versiyon' });
 });
 const slotAt = (kind, i) => slots.find(s => s.dataset.kind === kind && +s.dataset.i === i);
 const zoneSlots = (id, kind) => slots.filter(s => s.dataset.zone === id && s.dataset.kind === kind);
@@ -325,6 +348,27 @@ function slotUnder(x, y, kind) {
   return document.elementsFromPoint(x, y).find(n => n.classList && n.classList.contains('slot') && n.dataset.kind === kind &&
     !(n.querySelector('.item') && n.querySelector('.item').dataset.locked)) || null;
 }
+/* Maria 09.10 «иногда нужно постараться чтобы прикрепить»: the card snaps to the place it overlaps most,
+   or to the nearest free-for-it place within reach, not only when the cursor is exactly inside the place. */
+function slotFor(el, x, y, kind) {
+  const direct = slotUnder(x, y, kind);
+  if (direct) return direct;
+  const r = el.getBoundingClientRect();
+  const cands = slots.filter(s => s.dataset.kind === kind && !(s.querySelector('.item') && s.querySelector('.item').dataset.locked))
+    .map(s => ({ s, q: s.getBoundingClientRect() })).filter(c => c.q.width > 0);
+  let best = null, bestA = 0;
+  for (const { s, q } of cands) {
+    const w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+    if (w > 0 && h > 0 && w * h > bestA) { bestA = w * h; best = s; }
+  }
+  if (best) return best;
+  const cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2; let bd = Infinity;
+  for (const { s, q } of cands) {
+    const d = Math.hypot(cx - (q.left + q.right) / 2, cy - (q.top + q.bottom) / 2);
+    if (d < Math.max(q.width, q.height) * 0.9 && d < bd) { bd = d; best = s; }
+  }
+  return best;
+}
 addEventListener('pointermove', e => {
   if (press && !drag) {
     if (press.el.dataset.locked || Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) return;
@@ -333,22 +377,24 @@ addEventListener('pointermove', e => {
   if (!drag) return;
   drag.el.style.left = (e.clientX - drag.dx) + 'px'; drag.el.style.top = (e.clientY - drag.dy) + 'px';
   slots.forEach(s => s.classList.remove('hot'));
-  const s = slotUnder(e.clientX, e.clientY, drag.el.dataset.kind); if (s) s.classList.add('hot');
+  const overTray = tray.contains(document.elementFromPoint(e.clientX, e.clientY));
+  const s = overTray ? null : slotFor(drag.el, e.clientX, e.clientY, drag.el.dataset.kind); if (s) s.classList.add('hot');
 });
 addEventListener('pointerup', e => {
   if (press && !drag) { const el = press.el; press = null; openZoom(el); return; }
   press = null;
   if (!drag) return;
   const { el, from } = drag; drag = null;
+  const overTray = tray.contains(document.elementFromPoint(e.clientX, e.clientY));
+  const target = overTray ? null : slotFor(el, e.clientX, e.clientY, el.dataset.kind);
   el.classList.remove('dragging'); el.removeAttribute('style'); slots.forEach(s => s.classList.remove('hot'));
-  const target = slotUnder(e.clientX, e.clientY, el.dataset.kind);
   if (target) {
     const occupant = target.querySelector('.item');
     if (occupant && occupant !== el) {
       if (from.classList && from.classList.contains('slot')) from.appendChild(occupant); else goHome(occupant);
     }
     target.appendChild(el); play(SND_PIN);
-  } else if (from.classList && from.classList.contains('slot') && !tray.contains(document.elementFromPoint(e.clientX, e.clientY))) {
+  } else if (from.classList && from.classList.contains('slot') && !overTray) {
     from.appendChild(el);
   } else {
     goHome(el);
@@ -364,6 +410,14 @@ function lock(list) { list.forEach(el => { el.dataset.locked = '1'; }); }
 let stageLine = '';                    // the heroine's current line; hover comments show over it and give it back
 function show(t) { if (!t) { thought.classList.remove('on'); return; } thought.textContent = t; thought.classList.add('on'); }
 function say(text) { stageLine = text; thought.classList.remove('on'); void thought.offsetWidth; show(text); }
+/* Maria 09.10: testers did not understand what to do — a short task line for every stage */
+const HINTS = {
+  1: '<b>Görev:</b> Sağdaki kutudan fotoğrafları panodaki «Fotoğraf» yerlerine sürükleyin, her fotoğrafın altındaki «Not» yerine de ona uyan sarı notu koyun. Büyütmek için karta tıklayın.',
+  2: '<b>Görev:</b> Kanıtları üç gruba ayırıp «Kanıt» yerlerine yerleştirin ve her grubun yanındaki «versiyon» yerine ona uyan mavi versiyon kartını koyun.',
+  3: '<b>Görev:</b> Çıkarımlarınızı değerlendirmek için aşağıdaki düğmeye basın.',
+};
+function setHint(n) { document.getElementById('hint').innerHTML = HINTS[n] || ''; }
+setHint(1);
 document.addEventListener('pointerover', e => { if (drag) return; const el = e.target.closest && e.target.closest('.item[data-hover]'); if (el) show(el.dataset.hover); });
 document.addEventListener('pointerout', e => { const el = e.target.closest && e.target.closest('.item[data-hover]');
   if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) show(stageLine); });
@@ -394,7 +448,7 @@ function startStage2() {
     ...S2_HYP.map(h => makeNote('hyp', 'h' + h.g, h.text, { g: h.g }, 'hyp')),
   ], 5);
   scene.classList.add('s2on'); requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.add('s2show')));
-  window.STAGE = 2;
+  window.STAGE = 2; setHint(2);
 }
 const groupSize = g => S2_EVIDENCE.filter(e => e.g === g).length;
 function check2() {
@@ -417,7 +471,7 @@ function solveZone(ev, hyp) {
   play(SND_PIN);
 }
 function solved2(instant) {
-  stage = 3; window.STAGE = 3;
+  stage = 3; window.STAGE = 3; setHint(3);
   setTimeout(() => { say(S2_DONE); document.getElementById('evalbtn').classList.add('on'); }, instant ? 0 : 900);
 }
 
@@ -433,6 +487,64 @@ STATEMENTS.forEach((t, i) => {
 window.ticked = () => [...sheetList.children].filter(li => li.classList.contains('on')).map(li => +li.dataset.no);
 document.getElementById('evalbtn').addEventListener('click', () => { document.getElementById('paper').classList.add('on'); play(SND_PICK, .5); });
 document.getElementById('back').addEventListener('click', () => { document.getElementById('paper').classList.remove('on'); play(SND_PICK, .4); });
+
+/* Maria 09.10: copy the filled sheet as a picture to send to someone (button + right click on the sheet) */
+const toastEl = document.getElementById('toast'); let toastT = 0;
+function toast(t) { toastEl.textContent = t; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 3200); }
+function wrapLines(ctx, text, maxW) {
+  const words = text.split(' '), lines = []; let cur = '';
+  for (const w of words) { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+  if (cur) lines.push(cur); return lines;
+}
+async function sheetBlob() {
+  try { await document.fonts.load('500 34px Caveat'); await document.fonts.load('700 34px Caveat'); } catch (e) {}
+  const W = 1200, LH = 50, X0 = 150, NO = 62, MAXW = W - X0 - NO - 70, FONT = '500 36px Caveat, "Segoe Print", cursive';
+  const c = document.createElement('canvas'), ctx = c.getContext('2d');
+  ctx.font = FONT;
+  const blocks = STATEMENTS.map(t => wrapLines(ctx, t, MAXW));
+  const rows = 2 + blocks.reduce((a, b) => a + b.length + 0.4, 0);
+  c.width = W; c.height = Math.ceil(110 + rows * LH + 60);
+  ctx.fillStyle = '#fbf7ea'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.strokeStyle = 'rgba(80,120,190,.28)'; ctx.lineWidth = 1.5;
+  for (let y = 110 + LH; y < c.height - 20; y += LH) { ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(W, y + .5); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(205,60,60,.55)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(110, 0); ctx.lineTo(110, c.height); ctx.stroke();
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#7a1f1f'; ctx.font = '700 38px Caveat, "Segoe Print", cursive';
+  ctx.fillText(document.getElementById('sheethead').textContent, X0, 110 + LH - 12);
+  ctx.font = FONT; let y = 110 + 2 * LH - 12; const ticked = new Set(window.ticked());
+  blocks.forEach((lines, i) => {
+    const bx = X0, by = y - 30;
+    ctx.strokeStyle = '#24345c'; ctx.lineWidth = 3; ctx.strokeRect(bx, by, 30, 30);
+    if (ticked.has(i + 1)) {
+      ctx.strokeStyle = '#b3121c'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(bx + 2, by + 16); ctx.lineTo(bx + 13, by + 30); ctx.lineTo(bx + 36, by - 10); ctx.stroke();
+    }
+    ctx.fillStyle = '#3a4a73'; ctx.fillText((i + 1) + '.', X0 + 44, y);
+    ctx.fillStyle = '#1d2a4a';
+    lines.forEach((ln, k) => ctx.fillText(ln, X0 + NO + 24, y + k * LH));
+    y += (lines.length + 0.4) * LH;
+  });
+  ctx.fillStyle = '#8a8f9e'; ctx.font = 'italic 22px Georgia, serif'; ctx.fillText('David Reed nerede?', W - 260, c.height - 24);
+  return await new Promise(res => c.toBlob(res, 'image/png'));
+}
+async function copySheet() {
+  const blobP = sheetBlob();
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]);
+      window.COPIED = 'clipboard';
+      toast('Sayfanın resmi kopyalandı. Göndermek için bir sohbete yapıştırın (Ctrl+V).');
+      return;
+    }
+  } catch (e) {}
+  const blob = await blobP; const a = document.createElement('a');                 // fallback: save the picture
+  a.href = URL.createObjectURL(blob); a.download = 'versiyonlar.png'; document.body.appendChild(a); a.click(); a.remove();
+  window.COPIED = 'download';
+  toast('Resim kaydedildi: versiyonlar.png');
+}
+window.sheetBlob = sheetBlob;
+document.getElementById('copybtn').addEventListener('click', copySheet);
+document.getElementById('sheet').addEventListener('contextmenu', e => { e.preventDefault(); copySheet(); });
 
 /* ---------- direct entry for testing: ?stage=2 / ?stage=3 ---------- */
 const START = +(new URLSearchParams(location.search).get('stage') || 1);
